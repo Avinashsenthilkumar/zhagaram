@@ -80,6 +80,33 @@ const reviewModerationSchema = z.object({
   status: z.enum(["APPROVED", "DECLINED", "PENDING"]),
 });
 
+/** The one and only SiteSetting row. */
+const SETTINGS_ID = "singleton";
+
+const optionalText = (max: number) => z.string().trim().max(max).optional().nullable();
+
+const settingsSchema = z.object({
+  companyName: z.string().trim().min(2).max(160).optional(),
+  shortName: z.string().trim().min(2).max(120).optional(),
+  tagline: z.string().trim().max(200).optional(),
+  description: z.string().trim().max(1000).optional(),
+  logoData: z.string().max(12_000_000).optional().nullable(),
+  logoMimeType: z.string().optional().nullable(),
+  phone: optionalText(60),
+  email: optionalText(200),
+  address: optionalText(400),
+  whatsapp: optionalText(60),
+  linkedin: optionalText(300),
+  instagram: optionalText(300),
+  facebook: optionalText(300),
+  theme: z.enum(["light", "dark"]).optional(),
+});
+
+const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(8),
+  newPassword: z.string().min(8).max(200),
+});
+
 const supplierEnquiryRequestSchema = z.object({
   formType: z.literal("supplier"),
   name: z.string().trim().min(2).max(120),
@@ -115,6 +142,55 @@ function validateImage(imageData: string | null | undefined, imageMimeType: stri
   const bytes = Buffer.from(normalized, "base64");
   if (!bytes.length || bytes.length > maxImageBytes) throw new Error("Images must be smaller than 3 MB.");
   return { imageData: normalized, imageMimeType };
+}
+
+// SVG is allowed for the logo but not for catalogue images: a logo is a piece of
+// brand artwork the owner uploads once, and vector keeps it crisp at every size.
+// It is served from our own origin through an <img> tag, where SVG cannot run
+// script, so this does not widen the attack surface.
+const allowedLogoMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+
+function validateLogo(logoData: string | null | undefined, logoMimeType: string | null | undefined) {
+  if (!logoData && !logoMimeType) return { logoData: null, logoMimeType: null };
+  if (!logoData || !logoMimeType || !allowedLogoMimeTypes.has(logoMimeType)) {
+    throw new Error("The logo must be a JPEG, PNG, WebP or SVG file.");
+  }
+  const normalized = logoData.replace(/^data:[^;]+;base64,/, "");
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(normalized)) throw new Error("Invalid logo data.");
+  const bytes = Buffer.from(normalized, "base64");
+  if (!bytes.length || bytes.length > maxImageBytes) throw new Error("The logo must be smaller than 3 MB.");
+  return { logoData: normalized, logoMimeType };
+}
+
+/**
+ * Read the settings row, creating it on first access.
+ *
+ * `upsert` rather than `findUnique` so the API never has to answer "no settings
+ * exist yet" -- a database that has had the migration but not the seed still
+ * serves the schema defaults.
+ */
+async function getSiteSettings() {
+  return prisma.siteSetting.upsert({
+    where: { id: SETTINGS_ID },
+    update: {},
+    create: { id: SETTINGS_ID },
+  });
+}
+
+/**
+ * Strip the base64 logo before it goes over the wire and hand back a URL.
+ *
+ * The URL carries `?v=<updatedAt>` because /api/settings/logo is a fixed path:
+ * without the version, a replaced logo would sit behind the browser's
+ * `max-age=3600` for an hour and the owner would think the upload failed.
+ */
+function serializeSettings<T extends { logoMimeType?: string | null; updatedAt?: Date | string }>(settings: T) {
+  const { logoData: _logoData, ...rest } = settings as T & { logoData?: string | null };
+  const version = settings.updatedAt ? new Date(settings.updatedAt).getTime() : 0;
+  return {
+    ...rest,
+    logo: settings.logoMimeType ? `/api/settings/logo?v=${version}` : null,
+  };
 }
 
 function imageUrl(imageData: string | null | undefined, imageMimeType: string | null | undefined, legacyImage?: string) {
@@ -324,6 +400,76 @@ export async function handleApiRequest(req: any, res: any) {
       ? res.status(200).json({ success: true, data: { user: publicUser(user) } })
       : res.status(401).json({ success: false, message: "Unauthorized." });
   }
+
+  // ---- Site settings -------------------------------------------------------
+  // Public read: the header, footer and contact page render from this.
+  if (path === "/api/settings" && method === "GET") {
+    const settings = await getSiteSettings();
+    return res.status(200).json({ success: true, data: serializeSettings(settings) });
+  }
+
+  if (path === "/api/settings/logo" && method === "GET") {
+    const settings = await getSiteSettings();
+    return sendStoredImage(res, settings.logoData, settings.logoMimeType);
+  }
+
+  if (path === "/api/admin/settings" && method === "GET") {
+    await requireAdmin(req);
+    const settings = await getSiteSettings();
+    return res.status(200).json({ success: true, data: serializeSettings(settings) });
+  }
+
+  if (path === "/api/admin/settings" && method === "PATCH") {
+    await requireAdmin(req);
+    const payload = settingsSchema.parse(req.body ?? {});
+    // Only touch the logo columns when the client actually sent one, so saving
+    // the contact details does not wipe the uploaded logo.
+    const logo =
+      payload.logoData !== undefined || payload.logoMimeType !== undefined
+        ? validateLogo(payload.logoData, payload.logoMimeType)
+        : {};
+    const { logoData: _logoData, logoMimeType: _logoMimeType, ...rest } = payload;
+
+    // The form posts "" for a cleared optional field. Store NULL instead, so
+    // "not set" is one value in the database rather than two.
+    const cleaned = Object.fromEntries(
+      Object.entries(rest).map(([key, value]) => [key, value === "" ? null : value]),
+    ) as typeof rest;
+
+    await getSiteSettings();
+    const settings = await prisma.siteSetting.update({
+      where: { id: SETTINGS_ID },
+      data: { ...cleaned, ...logo },
+    });
+    return res.status(200).json({ success: true, data: serializeSettings(settings) });
+  }
+
+  if (path === "/api/admin/password" && method === "POST") {
+    const admin = await requireAdmin(req);
+    const payload = passwordChangeSchema.parse(req.body ?? {});
+    const record = await prisma.user.findUnique({
+      where: { id: admin.id },
+      select: { passwordHash: true },
+    });
+
+    // Re-check the current password even though the caller is already
+    // authenticated: a session left open on a shared machine must not be enough
+    // to take the account over.
+    if (!record?.passwordHash || !(await comparePassword(payload.currentPassword, record.passwordHash))) {
+      return res.status(401).json({ success: false, message: "Your current password is not correct." });
+    }
+
+    if (payload.currentPassword === payload.newPassword) {
+      return res.status(400).json({ success: false, message: "The new password must be different from the current one." });
+    }
+
+    await prisma.user.update({
+      where: { id: admin.id },
+      data: { passwordHash: await hashPassword(payload.newPassword) },
+    });
+    return res.status(200).json({ success: true, data: { updated: true } });
+  }
+  // ---- end site settings ---------------------------------------------------
 
   if (path === "/api/categories" && method === "GET") {
     const categories = await prisma.category.findMany({

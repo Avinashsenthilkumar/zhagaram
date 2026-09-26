@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type Re
 import { LogoSpinner } from "@/components/common/LogoSpinner";
 import { compressImageFile, formatBytes } from "@/lib/image-compress";
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { Boxes, LayoutDashboard, PackagePlus, Pencil, Plus, ShieldCheck, Star, Trash2, X } from "lucide-react";
+import { Boxes, LayoutDashboard, PackagePlus, Pencil, Plus, Settings, ShieldCheck, Star, Trash2, X } from "lucide-react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { apiResourceUrl, apiUrl } from "@/lib/api-url";
 
@@ -23,6 +23,36 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
   return result.data as T;
 }
 
+/**
+ * `splitValues` and `mimeFromDataUrl` were CALLED but never defined -- three
+ * TS2304 "Cannot find name" errors that the bundler happily shipped, because
+ * Vite strips types without checking them. At runtime they were ReferenceErrors,
+ * and they broke the product half of the admin panel outright:
+ *
+ *   - submitProduct() calls splitValues() to build the payload, so saving ANY
+ *     product threw before the request left the browser. runMutation catches it,
+ *     so the only symptom was "Unable to save changes." -- no product could ever
+ *     be created or edited.
+ *   - editProduct() calls mimeFromDataUrl(), and it runs straight from an
+ *     onClick with no try/catch, so pressing Edit threw and the modal never
+ *     opened at all.
+ *
+ * Categories were unaffected, which is why the panel looked half-working.
+ */
+
+/** "a, b , ,c" -> ["a","b","c"]. Splits on commas and newlines, drops blanks. */
+function splitValues(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+/** "data:image/png;base64,AAAA" -> "image/png". "" for anything else. */
+function mimeFromDataUrl(value: string): string {
+  return value.match(/^data:([^;,]+)[;,]/)?.[1] ?? "";
+}
+
 const emptyCategory = { name: "", slug: "", description: "", imageData: "", imageMimeType: "" };
 const emptyProduct = { name: "", slug: "", categoryId: "", shortDescription: "", description: "", images: "", features: "", imageData: "", imageMimeType: "" };
 const PAGE_SIZE = 6;
@@ -31,6 +61,10 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminSubPage = location.pathname.startsWith("/admin/");
+  // Compare the exact path, not just "is a sub page". With only /admin/reviews
+  // that distinction did not matter; now that /admin/settings exists too, the
+  // old `isAdminSubPage` check would light up BOTH links at once.
+  const subPath = isAdminSubPage ? location.pathname.replace(/\/+$/, "") : "";
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -136,7 +170,8 @@ function AdminDashboard() {
           <SidebarButton active={!isAdminSubPage && section === "overview"} icon={<LayoutDashboard size={17} />} onClick={() => { setSection("overview"); void navigate({ to: "/admin" }); }}>Overview</SidebarButton>
           <SidebarButton active={!isAdminSubPage && section === "categories"} icon={<Boxes size={17} />} onClick={() => { setSection("categories"); void navigate({ to: "/admin" }); }}>Categories</SidebarButton>
           <SidebarButton active={!isAdminSubPage && section === "products"} icon={<PackagePlus size={17} />} onClick={() => { setSection("products"); void navigate({ to: "/admin" }); }}>Products</SidebarButton>
-          <Link to="/admin/reviews" className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition ${isAdminSubPage ? "bg-white text-[#123d2b]" : "text-white/75 hover:bg-white/10 hover:text-white"}`}><Star size={17} /> Reviews</Link>
+          <Link to="/admin/reviews" className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition ${subPath === "/admin/reviews" ? "bg-white text-[#123d2b]" : "text-white/75 hover:bg-white/10 hover:text-white"}`}><Star size={17} /> Reviews</Link>
+          <Link to="/admin/settings" className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition ${subPath === "/admin/settings" ? "bg-white text-[#123d2b]" : "text-white/75 hover:bg-white/10 hover:text-white"}`}><Settings size={17} /> Settings</Link>
         </nav>
       </aside>
 
@@ -145,7 +180,8 @@ function AdminDashboard() {
           <MobileNav active={!isAdminSubPage && section === "overview"} onClick={() => { setSection("overview"); void navigate({ to: "/admin" }); }}>Overview</MobileNav>
           <MobileNav active={!isAdminSubPage && section === "categories"} onClick={() => { setSection("categories"); void navigate({ to: "/admin" }); }}>Categories</MobileNav>
           <MobileNav active={!isAdminSubPage && section === "products"} onClick={() => { setSection("products"); void navigate({ to: "/admin" }); }}>Products</MobileNav>
-          <Link to="/admin/reviews" className="shrink-0 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white">Reviews</Link>
+          <Link to="/admin/reviews" className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold ${subPath === "/admin/reviews" ? "bg-white text-[#123d2b]" : "bg-white/10 text-white"}`}>Reviews</Link>
+          <Link to="/admin/settings" className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold ${subPath === "/admin/settings" ? "bg-white text-[#123d2b]" : "bg-white/10 text-white"}`}>Settings</Link>
         </div>
       </div>
 

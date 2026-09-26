@@ -3,6 +3,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { PwaProvider } from "@/components/common/PwaProvider";
+import { ThemeController } from "@/components/common/ThemeController";
 import { NotFound } from "@/components/common/NotFound";
 import { pageTitle, pageDescription } from "@/lib/metadata";
 import appCss from "../styles.css?url";
@@ -50,6 +51,7 @@ function RootDocument() {
       <body className="overflow-x-clip" suppressHydrationWarning>
         <PreviewHostBridge />
         <PwaProvider />
+        <ThemeController />
 
         <AuthProvider>
           <SiteShell>

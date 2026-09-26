@@ -96,7 +96,14 @@ class ResponseRecorder {
     this.headers.delete("content-length");
     // 204/304 must not carry a body.
     const bodyless = this.statusCode === 204 || this.statusCode === 304;
-    return new Response(bodyless ? null : this.body, {
+    // The cast is deliberate. `CapturedBody` is `string | Uint8Array | null`,
+    // and every runtime accepts all three. TypeScript's DOM `BodyInit` wants an
+    // ArrayBufferView backed by a non-shared `ArrayBuffer`, while a plain
+    // `Uint8Array` is `Uint8Array<ArrayBufferLike>` (which also admits
+    // SharedArrayBuffer) -- so the assignment fails on a nominal detail that
+    // cannot occur here: the only Uint8Array we ever store comes from
+    // `Buffer.from(...)` in sendStoredImage.
+    return new Response(bodyless ? null : (this.body as BodyInit | null), {
       status: this.statusCode,
       headers: this.headers,
     });

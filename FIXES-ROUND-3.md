@@ -264,3 +264,49 @@ npm run dev:all          # site + API together
 
 Then the post-deploy order in `DEPLOY-VERCEL.md`: `/api/health`, `/api/products`,
 the home page, `/login` → `/admin`, `/contact`.
+
+---
+
+# Round 3b — errors `npm run typecheck` found
+
+`npm run build` succeeded before any of these were fixed. Vite/Rolldown strips
+types without checking them, so a missing function is not a build error — which
+is exactly how #13 shipped.
+
+## 13. The admin panel could not create or edit a product at all
+
+`src/routes/admin.tsx` called two functions that **were never defined anywhere**
+(`TS2304: Cannot find name`):
+
+- `splitValues()` — used by `submitProduct()` to turn the comma-separated
+  images/features fields into arrays. Every product save threw a
+  `ReferenceError` before the request left the browser. `runMutation` catches
+  it, so the only symptom was the generic "Unable to save changes."
+- `mimeFromDataUrl()` — used by `editProduct()`. That one runs straight from an
+  `onClick` with no try/catch, so pressing **Edit** on a product threw and the
+  modal never opened.
+
+Categories were unaffected, which is why the panel looked half-working rather
+than broken.
+
+**Fixed:** both implemented next to the form state they serve. `splitValues`
+splits on commas and newlines, trims, and drops blanks (the server rejects empty
+strings in those arrays); `mimeFromDataUrl` pulls the media type out of a
+`data:` URL and returns `""` for anything else, which is what the existing
+`imageData ? {...}` guards already expect.
+
+## 14. `server/routes/api/[...].ts` — Response body type
+
+`CapturedBody` is `string | Uint8Array | null`. TypeScript's DOM `BodyInit`
+wants an `ArrayBufferView` over a non-shared `ArrayBuffer`, while a plain
+`Uint8Array` is `Uint8Array<ArrayBufferLike>`, which also admits
+`SharedArrayBuffer`. A nominal mismatch that cannot occur here — the only
+`Uint8Array` ever stored comes from `Buffer.from(...)` in `sendStoredImage`.
+Narrow cast, with the reasoning in a comment.
+
+## 15. `src/components/layout/BottomTabBar.tsx` — union property access
+
+The `tabs` array is `as const` with `primary: true` on one entry only, so four
+members of the element union have no `primary` property and every `tab.primary`
+was a `TS2339`. `primary` is now declared on all five entries, which keeps the
+literal `href` values `<Link to=...>` needs instead of widening them to `string`.

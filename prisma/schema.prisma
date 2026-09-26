@@ -86,3 +86,30 @@ model Review {
   @@index([userId])
   @@index([status])
 }
+
+/// Site-wide settings the owner edits from /admin/settings.
+///
+/// One row, always id = "singleton". A settings TABLE rather than a key/value
+/// bag so every field is typed and a typo cannot silently create a new "key".
+/// The logo is stored as base64 in the database, the same way product and
+/// category images already are, so changing it needs no file storage and no
+/// redeploy.
+model SiteSetting {
+  id           String   @id @default("singleton")
+  companyName  String   @default("ZHAGARAM EXIM LLP")
+  shortName    String   @default("ZHAGARAM EXIM")
+  tagline      String   @default("From Indian Roots to Global Routes")
+  description  String   @default("India-based export and import company supplying quality agricultural and food products to international markets.")
+  logoData     String?  @db.Text
+  logoMimeType String?
+  phone        String?
+  email        String?
+  address      String?
+  whatsapp     String?
+  linkedin     String?
+  instagram    String?
+  facebook     String?
+  theme        String   @default("light")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

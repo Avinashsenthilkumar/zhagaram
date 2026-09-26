@@ -13,9 +13,3 @@ src/generated/prisma/
 
 # backups written by scripts/optimize-images.mjs
 public-original/
-
-screenshots/
-attachments/
-.agents/
-.claude/
-.windsurf/

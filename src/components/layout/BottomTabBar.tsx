@@ -2,12 +2,20 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Package, Phone, Route as RouteIcon, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * `primary` is spelled out on EVERY entry on purpose.
+ *
+ * With `as const` and the flag on only one entry, this array's element type is a
+ * union in which four members have no `primary` property at all, so every
+ * `tab.primary` below is a type error (TS2339). Declaring it on all five keeps
+ * the literal `href` values that <Link to=...> needs, without widening anything.
+ */
 const tabs = [
-  { label: "Home", href: "/", icon: Home },
-  { label: "Products", href: "/products", icon: Package },
+  { label: "Home", href: "/", icon: Home, primary: false },
+  { label: "Products", href: "/products", icon: Package, primary: false },
   { label: "Quote", href: "/get-a-quote", icon: FileText, primary: true },
-  { label: "Process", href: "/export-process", icon: RouteIcon },
-  { label: "Contact", href: "/contact", icon: Phone },
+  { label: "Process", href: "/export-process", icon: RouteIcon, primary: false },
+  { label: "Contact", href: "/contact", icon: Phone, primary: false },
 ] as const;
 
 /**
