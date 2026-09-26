@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 import { siteConfig } from "@/data/site";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,7 @@ export function Logo({
         loading="eager"
         decoding="sync"
         // @ts-expect-error fetchpriority is valid HTML, React types lag behind
-        fetchpriority="high"
+        fetchPriority="high"
         className={cn(
           "w-auto max-w-none border-0 object-contain outline-none",
           "transition-transform duration-300 group-hover:scale-[1.03]",
@@ -45,17 +45,21 @@ export function Logo({
 
       {showName ? (
         <span
-          className={cn(
-            "whitespace-nowrap font-semibold leading-none tracking-[0.18em]",
-            compact
-              ? "text-[0.5rem] sm:text-[0.55rem]"
-              : "text-[0.55rem] sm:text-[0.6rem] lg:text-[0.68rem]",
-            tone === "light" ? "text-white" : "text-[#0B2D5B]",
-          )}
-        >
-          {siteConfig.name}
-        </span>
+  className={cn(
+    "zhagaram-logo-name whitespace-nowrap font-semibold leading-none tracking-[0.18em]",
+    compact
+      ? "text-[0.5rem] sm:text-[0.55rem]"
+      : "text-[0.55rem] sm:text-[0.6rem] lg:text-[0.68rem]",
+  )}
+>
+  {siteConfig.name}
+</span>
       ) : null}
     </Link>
   );
 }
+
+
+
+
+
