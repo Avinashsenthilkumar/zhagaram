@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Admin surfaces are behind a login and carry no indexable content.
+Disallow: /admin
+Disallow: /login
+Disallow: /403
+Disallow: /api/
+
+# The Sitemap directive MUST be an absolute URL. A relative "/sitemap.xml" here
+# is silently ignored by every crawler, so the sitemap was never being read.
+Sitemap: https://zhagaramexim.com/sitemap.xml

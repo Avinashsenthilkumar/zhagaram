@@ -1,0 +1,56 @@
+# Files the Vercel CLI should not upload.
+#
+# IMPORTANT: when this file exists, Vercel uses it INSTEAD of .gitignore for
+# `vercel deploy` uploads, so every exclusion that matters has to be repeated
+# here -- secrets included. Git-based deploys are unaffected (Vercel clones the
+# repo), so this only shrinks CLI uploads.
+#
+# Why: `vercel --prod` uploads each file as its own request. This project was
+# sending 533 files / 18 MB, and roughly 270 files of that are documentation and
+# screenshots the build never reads. On a slow or unstable connection the
+# uploader gives up with "fetch failed" / "AbortError: This operation was
+# aborted". Dropping them roughly halves the payload.
+
+# --- secrets and local state (must stay listed) ---
+.env
+.env.*
+!.env.example
+.vercel
+node_modules
+.git
+
+# --- build output, regenerated every deploy ---
+dist
+.output
+.tanstack
+src/generated/prisma
+*.log
+
+# --- backups written by scripts/optimize-images.mjs ---
+public-original
+
+# --- AI assistant skill libraries: 213 files of Prisma docs, never built ---
+.agents
+.claude
+.windsurf
+skills-lock.json
+AGENTS.md
+
+# --- development screenshots: 7.8 MB, larger than the entire public/ folder ---
+screenshots
+attachments
+docs
+
+# --- project documentation ---
+CHANGES-ROUND-2.md
+FIXES-ROUND-3.md
+MERGE-NOTES.md
+DEPLOY-VERCEL.md
+DEPLOYMENT-GUIDE.md
+
+# Kept on purpose, because the build genuinely needs them:
+#   public/            static assets, icons, manifest, sw.js
+#   scripts/           with-app-env.mjs, grok-pwa-plugin.mjs, install-page.html
+#   migrations/        read by prisma.config.ts and vite.config.ts
+#   prisma/            schema + seed
+#   src/ server/       the app itself

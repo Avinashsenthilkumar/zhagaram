@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "ZHAGARAM EXIM LLP — From Indian Roots to Global Routes",
+      "hasCanvas": false,
+      "bodyTextLen": 5727,
+      "bodyTextHash": "3b88466ea5be1bac2a83c7594d3ba015011e23e2ed03148459adfdf4d57bc01b",
+      "bodyTextPrefix": "ZHAGARAM EXIM LLP Home About Products Export Process FAQ Contact",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "ZHAGARAM EXIM LLP — From Indian Roots to Global Routes",
+      "hasCanvas": false,
+      "bodyTextLen": 5668,
+      "bodyTextHash": "d8cd575d950ceb336d875e8c19a406227c681ba4bdb7625b21d61faf854770ac",
+      "bodyTextPrefix": "ZHAGARAM EXIM LLP AGRICULTURAL EXPORT & IMPORT ZHAGARAM EXIM LLP",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

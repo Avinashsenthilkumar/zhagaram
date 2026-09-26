@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reviews      Review[]
+}
+
+model Category {
+  id             String    @id @default(cuid())
+  name           String    @unique
+  slug           String    @unique
+  description    String?
+  imageData      String?   @db.Text
+  imageMimeType  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  products       Product[]
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  categoryId       String?
+  shortDescription String?
+  description      String?
+  images           String[]  @default([])
+  imageData        String?   @db.Text
+  imageMimeType    String?
+  features         String[]  @default([])
+  status           String    @default("ACTIVE")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  category         Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  reviews          Review[]
+
+  @@index([categoryId])
+  @@index([status])
+}
+
+model Review {
+  id            String       @id @default(cuid())
+  productId     String
+  userId        String?
+  reviewerName  String
+  rating        Int
+  title         String
+  comment       String
+  status        ReviewStatus @default(PENDING)
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId, status])
+  @@index([userId])
+  @@index([status])
+}

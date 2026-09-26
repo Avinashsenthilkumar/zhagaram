@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Every <loc> must be a fully qualified URL (sitemaps.org protocol). The previous
+  version used paths ("/about"), which makes the whole file invalid and means
+  none of these pages were ever submitted.
+
+  Host: keep this in step with `url` in src/data/site.ts.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://zhagaramexim.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://zhagaramexim.com/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://zhagaramexim.com/products</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://zhagaramexim.com/products/spices</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/products/edible-oils</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/products/nuts</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/products/pulses</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/products/rice</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/products/other-products</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/export-process</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zhagaramexim.com/contact</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://zhagaramexim.com/get-a-quote</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://zhagaramexim.com/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://zhagaramexim.com/privacy-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://zhagaramexim.com/terms-and-conditions</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>
