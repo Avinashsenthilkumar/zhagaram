@@ -170,6 +170,12 @@ function validateLogo(logoData: string | null | undefined, logoMimeType: string 
  * serves the schema defaults.
  */
 async function getSiteSettings() {
+  // Read first. /api/settings is hit by the header on EVERY page, and an
+  // unconditional upsert would make that a write against the database on every
+  // single page view. The upsert only runs the one time the row is missing.
+  const existing = await prisma.siteSetting.findUnique({ where: { id: SETTINGS_ID } });
+  if (existing) return existing;
+
   return prisma.siteSetting.upsert({
     where: { id: SETTINGS_ID },
     update: {},

@@ -3,11 +3,13 @@ import { Link } from "@tanstack/react-router";
 import { Container } from "@/components/common/Container";
 import { footerColumns, footerCopy } from "@/data/footer";
 import { apiUrl } from "@/lib/api-url";
+import { useSiteSettings } from "@/lib/site-settings";
 
 type FooterCategory = { id: string; name: string; slug: string };
 
 export function Footer() {
   const [categories, setCategories] = useState<FooterCategory[]>([]);
+  const settings = useSiteSettings();
 
   useEffect(() => {
     let active = true;
@@ -34,7 +36,7 @@ export function Footer() {
       <Container className="mt-4 py-4 sm:py-4">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_2fr]">
           <div>
-            <Link to="/" aria-label="Home" className="inline-flex items-center"><img loading="lazy" decoding="async" src="/logo.png" alt="ZHAGARAM EXIM LLP" className="h-16 w-auto max-w-[14rem] rounded-sm bg-white object-contain" /></Link>
+            <Link to="/" aria-label="Home" className="inline-flex items-center"><img loading="lazy" decoding="async" src={settings.logo ?? "/logo.png"} alt={settings.companyName} className="h-16 w-auto max-w-[14rem] rounded-sm bg-white object-contain" /></Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-primary-foreground/70">{footerCopy.tagline}</p>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-primary-foreground/55">{footerCopy.blurb}</p>
           </div>

@@ -14,48 +14,97 @@
 /*
  * Admin console dark surface.
  *
- * Written as plain CSS scoped to `[data-theme="dark"]` on purpose: the admin
- * pages use hard-coded hex utilities (bg-[#f4f6f1], bg-white, …) rather than
- * theme tokens, so there is no token to swap. Overriding the handful of surfaces
- * here turns the whole console dark without touching hundreds of class strings.
- * The public marketing site stays light for now.
+ * Scoped to `.admin-console`, the class on the admin shell's root element, and
+ * NOT applied to <body>. That scoping is the whole point: these rules override
+ * bare utilities like `.bg-white` and `.text-slate-700`, which the PUBLIC site
+ * uses too. Left global, switching to dark would have darkened the marketing
+ * pages' cards while their text stayed dark — unreadable.
+ *
+ * Plain CSS rather than theme tokens because the admin pages are written with
+ * hard-coded hex utilities (bg-[#f4f6f1], bg-white, …); there is no token to
+ * swap. Overriding the handful of surfaces here turns the whole console dark
+ * without touching hundreds of class strings.
  */
-[data-theme="dark"] body {
+[data-theme="dark"] .admin-console {
   background-color: #0e1613;
   color: #e6ece9;
 }
 
-[data-theme="dark"] .bg-\[\#f4f6f1\] {
+[data-theme="dark"] .admin-console .bg-\[\#f4f6f1\] {
   background-color: #0e1613;
 }
 
-[data-theme="dark"] .bg-white {
+[data-theme="dark"] .admin-console .bg-white {
   background-color: #16211d;
 }
 
-[data-theme="dark"] .border-\[\#dbe5dc\] {
+[data-theme="dark"] .admin-console .border-\[\#dbe5dc\] {
   border-color: #27362f;
 }
 
-[data-theme="dark"] .text-\[\#123d2b\] {
+[data-theme="dark"] .admin-console .text-\[\#123d2b\] {
   color: #7fd6ab;
 }
 
-[data-theme="dark"] .text-slate-600,
-[data-theme="dark"] .text-slate-500 {
+[data-theme="dark"] .admin-console .text-slate-700,
+[data-theme="dark"] .admin-console .text-slate-600,
+[data-theme="dark"] .admin-console .text-slate-500,
+[data-theme="dark"] .admin-console .text-slate-400 {
   color: #9db1a8;
 }
 
-[data-theme="dark"] .text-\[\#18352a\] {
+[data-theme="dark"] .admin-console .text-\[\#18352a\],
+[data-theme="dark"] .admin-console .text-\[\#075333\] {
   color: #e6ece9;
 }
 
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="dark"] select {
+/* Tinted panels: the light mint and off-white fills used for thumbnails,
+   empty states and table headers. */
+[data-theme="dark"] .admin-console .bg-\[\#edf4ee\],
+[data-theme="dark"] .admin-console .bg-\[\#f7faf8\],
+[data-theme="dark"] .admin-console .bg-\[\#f8faf9\] {
+  background-color: #1d2b25;
+}
+
+[data-theme="dark"] .admin-console .border-slate-300,
+[data-theme="dark"] .admin-console .border-slate-200,
+[data-theme="dark"] .admin-console .border-\[\#c9d8cc\] {
+  border-color: #2c3d35;
+}
+
+[data-theme="dark"] .admin-console .divide-slate-100 > * + * {
+  border-color: #27362f;
+}
+
+/* Status banners keep their meaning but stop glowing white. */
+[data-theme="dark"] .admin-console .bg-emerald-50 {
+  background-color: #12291f;
+}
+
+[data-theme="dark"] .admin-console .bg-red-50 {
+  background-color: #2a1517;
+}
+
+[data-theme="dark"] .admin-console .text-emerald-800 {
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .admin-console .text-red-800,
+[data-theme="dark"] .admin-console .text-red-700 {
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .admin-console input,
+[data-theme="dark"] .admin-console textarea,
+[data-theme="dark"] .admin-console select {
   background-color: #0e1613;
   border-color: #2c3d35;
   color: #e6ece9;
+}
+
+[data-theme="dark"] .admin-console input::placeholder,
+[data-theme="dark"] .admin-console textarea::placeholder {
+  color: #6d817a;
 }
 
 :root {

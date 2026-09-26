@@ -162,7 +162,7 @@ function AdminDashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-[#f4f6f1] text-[#18352a]">
+    <div className="admin-console min-h-screen bg-[#f4f6f1] text-[#18352a]">
       <AdminHeader email={user?.email} refreshing={isRefreshing} onRefresh={() => void loadDashboard(true)} onSignOut={() => void signOut()} />
       <aside className="fixed inset-y-16 left-0 z-40 hidden w-64 border-r border-[#1f5a40] bg-[#123d2b] p-4 text-white lg:block">
         <div className="border-b border-white/15 px-3 pb-5"><div className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck size={17} /> Owner Console</div><p className="mt-2 truncate text-xs text-white/60">{user?.email}</p></div>

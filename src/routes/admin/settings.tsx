@@ -4,7 +4,7 @@ import { AlertCircle, Check, Image as ImageIcon, Loader2, Lock, Moon, Palette, S
 
 import { apiUrl } from "@/lib/api-url";
 import { compressImageFile, formatBytes } from "@/lib/image-compress";
-import { refreshSiteSettings, type SiteSettings } from "@/lib/site-settings";
+import { setSiteSettings, type SiteSettings } from "@/lib/site-settings";
 
 export const Route = createFileRoute("/admin/settings")({ component: SettingsPage });
 
@@ -139,9 +139,10 @@ function SettingsPage() {
       setCurrentLogo(settings.logo ?? null);
       setNewLogo(null);
       setRemoveLogo(false);
-      // Drop the cached copy the header and footer share, so the new brand
-      // shows up without a reload.
-      void refreshSiteSettings();
+      // Push the saved values straight into the shared store. The header logo,
+      // the company name and the theme all update immediately — no reload, and
+      // no second request, because the PATCH response is the new state.
+      setSiteSettings(settings);
       setNotice("Settings saved.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save settings.");

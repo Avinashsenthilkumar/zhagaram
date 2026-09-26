@@ -1,5 +1,7 @@
 import { RefreshCw, LogOut } from "lucide-react";
 
+import { useSiteSettings } from "@/lib/site-settings";
+
 export function AdminHeader({
   email,
   onRefresh,
@@ -11,6 +13,10 @@ export function AdminHeader({
   refreshing: boolean;
   onSignOut: () => void;
 }) {
+  // The admin bar shows the owner's uploaded logo too, which is what the
+  // settings page promises. Falls back to the bundled mark.
+  const settings = useSiteSettings();
+
   return (
     <header className="sticky top-0 z-40 border-b border-[#dbe5dc] bg-white">
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -21,8 +27,8 @@ export function AdminHeader({
             <img
               loading="lazy"
               decoding="async"
-              src="/logo.png"
-              alt="ZHAGARAM EXIM LLP"
+              src={settings.logo ?? "/logo.png"}
+              alt={settings.companyName}
               className="h-9 w-auto object-contain"
             />
           </div>

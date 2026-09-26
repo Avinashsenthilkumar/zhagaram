@@ -1,22 +1,23 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { siteConfig } from "@/data/site";
 import { apiUrl } from "@/lib/api-url";
 
 /**
- * Owner-editable site settings, loaded from /api/settings.
+ * Owner-editable site settings, loaded once from /api/settings and shared by
+ * every component that needs them.
  *
- * WHY A CLIENT-SIDE FETCH RATHER THAN THE SSR LOADER
- * --------------------------------------------------
- * The header and footer render on every page, including ones with no loader of
- * their own. Fetching in the component keeps the first server-rendered HTML
- * identical to the first client render (both use `siteConfig`), so there is no
- * hydration mismatch, and the real values swap in a moment later. The trade-off
- * is a brief flash of the built-in name on a cold load; the alternative was
- * threading settings through every route's loader.
+ * THIS IS A STORE, NOT A PER-COMPONENT FETCH, AND THAT MATTERS.
+ * The first version cached the in-flight promise but gave each component its own
+ * `useState` + mount-effect. Saving in /admin/settings cleared the cache, but no
+ * component ever re-read it: the effects had already run and would not run
+ * again. So the theme switch did nothing until a full page reload, and the same
+ * was true of the logo and company name. A module-level store with subscribers
+ * fixes it — one fetch, and every reader updates the moment the value changes.
  *
- * The in-flight promise is cached at module scope so the header, the footer and
- * the contact page share ONE request instead of three.
+ * `useSyncExternalStore` is the right hook for this: it is SSR-safe through
+ * `getServerSnapshot`, which returns the defaults so the server-rendered HTML
+ * matches the first client render and hydration stays clean.
  */
 export type SiteSettings = {
   companyName: string;
@@ -51,8 +52,6 @@ export const defaultSiteSettings: SiteSettings = {
   theme: "light",
 };
 
-let pending: Promise<SiteSettings | null> | null = null;
-
 function normalize(value: unknown): SiteSettings {
   const raw = (value ?? {}) as Partial<SiteSettings>;
   const text = (input: unknown, fallback: string) =>
@@ -77,43 +76,78 @@ function normalize(value: unknown): SiteSettings {
   };
 }
 
-/** Shared, cached request. Never rejects — a failure means "use the defaults". */
+/**
+ * The current value. `getSnapshot` must return a STABLE reference between
+ * renders or useSyncExternalStore loops forever, so this is only reassigned
+ * when the settings actually change.
+ */
+let current: SiteSettings = defaultSiteSettings;
+let pending: Promise<SiteSettings | null> | null = null;
+
+const listeners = new Set<() => void>();
+
+function emit() {
+  for (const listener of listeners) listener();
+}
+
+function publish(next: SiteSettings | null) {
+  if (!next) return;
+  current = next;
+  emit();
+}
+
+/** Shared, cached request. Never rejects — a failure means "keep the defaults". */
 export function loadSiteSettings(): Promise<SiteSettings | null> {
   if (!pending) {
     pending = fetch(apiUrl("/api/settings"))
       .then((response) => (response.ok ? response.json() : null))
-      .then((result) =>
-        result && (result as { success?: boolean }).success
-          ? normalize((result as { data?: unknown }).data)
-          : null,
-      )
+      .then((result) => {
+        const value =
+          result && (result as { success?: boolean }).success
+            ? normalize((result as { data?: unknown }).data)
+            : null;
+        publish(value);
+        return value;
+      })
       .catch(() => null);
   }
   return pending;
 }
 
 /**
- * Drop the cache so the next read hits the API.
- * Called by the settings page after a successful save.
+ * Re-read from the API and tell every subscriber.
+ * Called by the settings page after a successful save, which is what makes the
+ * theme, logo and company name change without a page reload.
  */
 export function refreshSiteSettings(): Promise<SiteSettings | null> {
   pending = null;
   return loadSiteSettings();
 }
 
+/** Apply a value the caller already has, without a round trip. */
+export function setSiteSettings(value: SiteSettings) {
+  publish(normalize(value));
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  // Kick the first load off the first time anything subscribes. Later
+  // subscribers reuse the cached promise.
+  void loadSiteSettings();
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): SiteSettings {
+  return current;
+}
+
+function getServerSnapshot(): SiteSettings {
+  return defaultSiteSettings;
+}
+
 /** Settings for rendering. Always returns something usable, never null. */
 export function useSiteSettings(): SiteSettings {
-  const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
-
-  useEffect(() => {
-    let active = true;
-    void loadSiteSettings().then((value) => {
-      if (active && value) setSettings(value);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return settings;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
