@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Container } from "@/components/common/Container";
 import { footerColumns, footerCopy } from "@/data/footer";
-import { apiUrl } from "@/lib/api-url";
+import { cachedJson } from "@/lib/api-cache";
 import { useSiteSettings } from "@/lib/site-settings";
 
 type FooterCategory = { id: string; name: string; slug: string };
@@ -13,8 +13,7 @@ export function Footer() {
 
   useEffect(() => {
     let active = true;
-    void fetch(apiUrl("/api/categories"))
-      .then((response) => response.json() as Promise<{ success: boolean; data?: FooterCategory[] }>)
+    void cachedJson<{ success: boolean; data?: FooterCategory[] }>("/api/categories")
       .then((result) => { if (active && result.success) setCategories(result.data ?? []); })
       .catch(() => undefined);
     return () => { active = false; };

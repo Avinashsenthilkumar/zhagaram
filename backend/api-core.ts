@@ -204,17 +204,33 @@ function imageUrl(imageData: string | null | undefined, imageMimeType: string | 
   return legacyImage || null;
 }
 
+/**
+ * `?v=<updatedAt>` on every stored-image URL.
+ *
+ * The path alone (/api/products/rice/image) never changes, so the only safe
+ * cache lifetime was a short one. With the row's updatedAt in the query string,
+ * editing a product mints a NEW url, and the old one can be cached for a year
+ * by the browser and by Vercel's CDN. That is what takes repeat image requests
+ * off the function entirely.
+ */
+function imageVersion(row: { updatedAt?: Date | string | null }): string {
+  if (!row.updatedAt) return "";
+  const time = new Date(row.updatedAt).getTime();
+  return Number.isFinite(time) ? `?v=${time}` : "";
+}
+
 function serializeCategory<T extends object>(category: T, includeImageData = false) {
   const image = category as {
     id?: string;
     slug?: string;
     imageData?: string | null;
     imageMimeType?: string | null;
+    updatedAt?: Date | string | null;
   };
   const imageValue = includeImageData
     ? imageUrl(image.imageData, image.imageMimeType)
     : image.imageMimeType && image.slug
-      ? `/api/categories/${encodeURIComponent(image.slug)}/image`
+      ? `/api/categories/${encodeURIComponent(image.slug)}/image${imageVersion(image)}`
       : null;
   return { ...category, image: imageValue };
 }
@@ -235,23 +251,57 @@ function serializeProduct<T extends object>(product: T, includeImageData = false
     imageData?: string | null;
     imageMimeType?: string | null;
     images?: string[];
+    updatedAt?: Date | string | null;
   };
   const firstLegacyImage = image.images?.[0] || null;
   const hasStoredImage = Boolean(image.imageMimeType) || Boolean(firstLegacyImage?.startsWith("data:"));
   const imageValue = includeImageData
     ? imageUrl(image.imageData, image.imageMimeType, firstLegacyImage ?? undefined)
     : image.slug && hasStoredImage
-      ? `/api/products/${encodeURIComponent(image.slug)}/image`
+      ? `/api/products/${encodeURIComponent(image.slug)}/image${imageVersion(image)}`
       : firstLegacyImage || null;
   return { ...product, image: imageValue };
 }
 
-function sendStoredImage(res: any, imageData: string | null | undefined, imageMimeType: string | null | undefined, legacyImage?: string) {
+/**
+ * Stored images are addressed with a version (see `imageVersion`), so the bytes
+ * behind a given url never change. `s-maxage` is the one that matters on Vercel:
+ * it lets the CDN answer repeat requests without invoking the function or
+ * touching Postgres at all. No `immutable`, so a missing version still heals
+ * itself within the day rather than sticking forever.
+ */
+const IMAGE_CACHE_CONTROL = "public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800";
+
+/**
+ * Cache policy for a request WITHOUT `?v=`.
+ *
+ * The year-long policy above is only safe because the url changes when the
+ * image does. An unversioned url is a fixed address for changing bytes, so
+ * caching it that long would pin a replaced photo for a year with no way to
+ * clear it short of renaming the product. Anything arriving without a version
+ * -- an old page still in someone's tab, a bookmarked image, a call site whose
+ * query forgot to select updatedAt -- gets five minutes instead.
+ */
+const UNVERSIONED_IMAGE_CACHE_CONTROL = "public, max-age=60, s-maxage=300, stale-while-revalidate=600";
+
+/** Public JSON the CDN may hold briefly. Never used for admin or auth routes. */
+function cacheJson(res: any, seconds: number) {
+  res.setHeader("Cache-Control", `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=300`);
+}
+
+function sendStoredImage(
+  res: any,
+  imageData: string | null | undefined,
+  imageMimeType: string | null | undefined,
+  legacyImage?: string,
+  versioned = false,
+) {
+  const cacheControl = versioned ? IMAGE_CACHE_CONTROL : UNVERSIONED_IMAGE_CACHE_CONTROL;
   if (!imageData && legacyImage?.startsWith("data:")) {
     const match = legacyImage.match(/^data:([^;]+);base64,(.+)$/);
     if (match) {
       res.setHeader("Content-Type", match[1]);
-      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", cacheControl);
       return res.status(200).send(Buffer.from(match[2], "base64"));
     }
   }
@@ -263,7 +313,7 @@ function sendStoredImage(res: any, imageData: string | null | undefined, imageMi
 
   const normalized = imageData.replace(/^data:[^;]+;base64,/, "");
   res.setHeader("Content-Type", imageMimeType);
-  res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+  res.setHeader("Cache-Control", cacheControl);
   res.setHeader("Content-Length", String(Buffer.byteLength(normalized, "base64")));
   return res.status(200).send(Buffer.from(normalized, "base64"));
 }
@@ -314,6 +364,10 @@ const publicCategorySelect = {
   slug: true,
   description: true,
   imageMimeType: true,
+  // Carried so the image URL can include ?v=<updatedAt>. That version is what
+  // lets the CDN cache the bytes for a year: a replaced image gets a new URL
+  // rather than waiting out a max-age.
+  updatedAt: true,
 } as const;
 
 const publicProductSelect = {
@@ -326,6 +380,7 @@ const publicProductSelect = {
   imageMimeType: true,
   features: true,
   status: true,
+  updatedAt: true,
 } as const;
 
 async function findProduct(identifier: string) {
@@ -361,6 +416,18 @@ export async function handleApiRequest(req: any, res: any) {
   const url = new URL(req.originalUrl || req.url || "/", "http://localhost");
   const path = url.pathname.replace(/\/$/, "") || "/";
   const method = String(req.method || "GET").toUpperCase();
+
+  // Default to "never cache". The public catalogue routes opt back in with
+  // cacheJson(); everything touching a session or the admin panel must not be
+  // held by a browser or, far worse, by the shared CDN -- one admin's dashboard
+  // served to the next visitor is exactly the bug this prevents.
+  if (path.startsWith("/api/admin") || path.startsWith("/api/auth")) {
+    res.setHeader("Cache-Control", "no-store, private");
+  }
+
+  // Whether this image request carries the ?v=<updatedAt> that makes a long
+  // cache safe. See UNVERSIONED_IMAGE_CACHE_CONTROL.
+  const hasVersion = Boolean(url.searchParams.get("v"));
 
   if (path === "/api/health" && method === "GET") {
     return res.status(200).json({ success: true, message: "API is running" });
@@ -411,12 +478,15 @@ export async function handleApiRequest(req: any, res: any) {
   // Public read: the header, footer and contact page render from this.
   if (path === "/api/settings" && method === "GET") {
     const settings = await getSiteSettings();
+    // Shorter than the catalogue: the owner expects a saved logo or phone number
+    // to show up on the live site quickly.
+    cacheJson(res, 30);
     return res.status(200).json({ success: true, data: serializeSettings(settings) });
   }
 
   if (path === "/api/settings/logo" && method === "GET") {
     const settings = await getSiteSettings();
-    return sendStoredImage(res, settings.logoData, settings.logoMimeType);
+    return sendStoredImage(res, settings.logoData, settings.logoMimeType, undefined, hasVersion);
   }
 
   if (path === "/api/admin/settings" && method === "GET") {
@@ -482,6 +552,7 @@ export async function handleApiRequest(req: any, res: any) {
       orderBy: { name: "asc" },
       select: publicCategorySelect,
     });
+    cacheJson(res, 60);
     return res.status(200).json({ success: true, data: categories.map((category) => serializeCategory(category)) });
   }
 
@@ -500,6 +571,7 @@ export async function handleApiRequest(req: any, res: any) {
         product: { select: { name: true } },
       },
     });
+    cacheJson(res, 60);
     return res.status(200).json({
       success: true,
       data: reviews.map((review) => ({
@@ -520,7 +592,7 @@ export async function handleApiRequest(req: any, res: any) {
       select: { imageData: true, imageMimeType: true },
     });
     return category
-      ? sendStoredImage(res, category.imageData, category.imageMimeType)
+      ? sendStoredImage(res, category.imageData, category.imageMimeType, undefined, hasVersion)
       : res.status(404).end();
   }
 
@@ -537,6 +609,7 @@ export async function handleApiRequest(req: any, res: any) {
       orderBy: { createdAt: "desc" },
       select: publicProductSelect,
     });
+    cacheJson(res, 60);
     return res.status(200).json({ success: true, data: products.map((product) => serializeProduct(product)) });
   }
 
@@ -547,7 +620,7 @@ export async function handleApiRequest(req: any, res: any) {
       select: { imageData: true, imageMimeType: true, images: true },
     });
     return product
-      ? sendStoredImage(res, product.imageData, product.imageMimeType, product.images?.[0])
+      ? sendStoredImage(res, product.imageData, product.imageMimeType, product.images?.[0], hasVersion)
       : res.status(404).end();
   }
 
@@ -757,7 +830,7 @@ export async function handleApiRequest(req: any, res: any) {
         // database. Selecting only `images` meant every product uploaded through
         // the admin panel (which writes imageData/imageMimeType, not `images`)
         // showed a letter placeholder instead of its thumbnail.
-        product: { select: { id: true, name: true, slug: true, images: true, imageMimeType: true } },
+        product: { select: { id: true, name: true, slug: true, images: true, imageMimeType: true, updatedAt: true } },
       },
     });
     const serializedReviews = reviews.map((review) => ({

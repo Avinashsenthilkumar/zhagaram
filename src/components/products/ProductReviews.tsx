@@ -9,6 +9,7 @@ import "swiper/css/pagination";
 
 import type { Product } from "@/types/product";
 import { apiUrl } from "@/lib/api-url";
+import { cachedJson } from "@/lib/api-cache";
 
 type Testimonial = {
   id: string;
@@ -67,16 +68,10 @@ export function ProductReviews({
 
   const loadTestimonials = async () => {
     try {
-      const response = await fetch(apiUrl("/api/testimonials"));
-
-      if (!response.ok) {
-        throw new Error("Unable to load testimonials.");
-      }
-
-      const result = (await response.json()) as {
+      const result = await cachedJson<{
         success: boolean;
         data?: Testimonial[];
-      };
+      }>("/api/testimonials");
 
       if (active && result.success) {
         setTestimonials(result.data ?? []);

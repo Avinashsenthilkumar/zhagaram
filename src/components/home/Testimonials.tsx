@@ -7,7 +7,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { Container } from "@/components/common/Container";
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { apiUrl } from "@/lib/api-url";
+import { cachedJson } from "@/lib/api-cache";
 import { SectionLoader } from "@/components/common/LogoSpinner";
 
 type Testimonial = { id: string; rating: number; content: string; name: string; role: string; productName?: string };
@@ -20,8 +20,7 @@ export function Testimonials() {
 
   useEffect(() => {
     let active = true;
-    void fetch(apiUrl("/api/testimonials"))
-      .then((response) => response.json() as Promise<{ success: boolean; data?: Testimonial[] }>)
+    void cachedJson<{ success: boolean; data?: Testimonial[] }>("/api/testimonials")
       .then((result) => { if (active && result.success) setItems(result.data ?? []); })
       .catch(() => { if (active) setItems([]); })
       .finally(() => { if (active) setLoading(false); });

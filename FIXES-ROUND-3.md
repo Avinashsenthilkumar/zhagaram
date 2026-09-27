@@ -310,3 +310,76 @@ The `tabs` array is `as const` with `primary: true` on one entry only, so four
 members of the element union have no `primary` property and every `tab.primary`
 was a `TS2339`. `primary` is now declared on all five entries, which keeps the
 literal `href` values `<Link to=...>` needs instead of widening them to `string`.
+
+---
+
+# Stage 2 — performance
+
+Measured from the deployed function log, not guessed at.
+
+## 16. The same list was fetched 2-4 times per page view
+
+```
+00:17:23.94  GET /api/categories
+00:17:23.46  GET /api/categories
+00:17:22.55  GET /api/categories
+00:17:22.46  GET /api/categories
+```
+
+Four requests for one list inside a second. The footer asks for categories on
+every page, the products loader asks again, the contact form a third time —
+each with its own `fetch` in its own effect, none aware of the others.
+`/api/testimonials` had the same problem across the home and product pages.
+
+**Fixed:** `src/lib/api-cache.ts` — an in-flight map so simultaneous callers
+share one request, plus a 30s TTL cache so a navigation moments later reuses the
+answer. Wired into the footer, the testimonials slider, the product reviews
+block and `catalog-api.ts`.
+
+It is a deliberate **pass-through on the server**: module state in a warm
+serverless instance is shared by every visitor that instance handles, so caching
+there would risk serving one person's response to the next. The CDN covers that
+side instead (#17).
+
+## 17. Every image request hit the function and the database
+
+Stored images carried `max-age=3600` and no `s-maxage`, so Vercel's CDN cached
+nothing. Every thumbnail on every visit was a function invocation plus a
+Postgres query returning up to 3 MB of base64.
+
+The reason the lifetime was short: `/api/products/rice/image` never changes, so
+a long cache would have pinned a replaced photo.
+
+**Fixed:** image URLs now carry `?v=<updatedAt>`, so editing a product mints a
+new URL, and the bytes behind any given URL are immutable in practice. That
+makes a long cache safe:
+
+```
+public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800
+```
+
+`s-maxage` is the one that matters — repeat requests are served by the CDN
+without waking the function or touching the database. No `immutable`, so a URL
+that somehow lost its version still heals within the day instead of sticking
+forever.
+
+## 18. Public JSON was uncacheable; admin JSON was not protected from caching
+
+`/api/categories`, `/api/products` and `/api/testimonials` sent no cache headers
+at all, so every page view was a fresh function call.
+
+**Fixed:** those three now send `s-maxage=60`, and `/api/settings` `s-maxage=30`
+(shorter, because a saved logo should appear quickly). `max-age=0` keeps the
+browser revalidating, so the CDN absorbs the traffic without anyone seeing
+stale data for long.
+
+The other half matters more: **everything under `/api/admin` and `/api/auth` now
+sends `no-store, private`**, set once at the top of `handleApiRequest`. Those
+responses carry session state and admin data, and a shared CDN holding one
+admin's dashboard and serving it to the next visitor is the failure this
+forecloses. It was never observed — there were simply no headers either way,
+which is not something to leave to chance.
+
+**Trade-off worth knowing:** adding a product can take up to 60 seconds to
+appear on the public site. Lower the `cacheJson(res, 60)` values in
+`backend/api-core.ts` if you want that faster.

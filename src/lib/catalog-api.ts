@@ -1,6 +1,7 @@
 import { products as fallbackProducts } from "@/data/products";
 import type { Product } from "@/types/product";
 import { apiResourceUrl, apiUrl } from "@/lib/api-url";
+import { cachedJson } from "@/lib/api-cache";
 
 export type CatalogCategory = {
   id: string;
@@ -54,9 +55,7 @@ function fallbackProductItems(): Product[] {
 
 export async function fetchCatalogProducts(): Promise<Product[]> {
   try {
-    const response = await fetch(apiUrl("/api/products"));
-    if (!response.ok) throw new Error("Unable to load products.");
-    const result = await response.json() as { success: boolean; data: ApiProduct[] };
+    const result = await cachedJson<{ success: boolean; data: ApiProduct[] }>("/api/products");
     if (!result.success) throw new Error("Unable to load products.");
     const items = result.data.map(mapApiProduct);
     return items.length ? items : fallbackProductItems();
@@ -67,9 +66,7 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
 
 export async function fetchCatalogCategories(): Promise<CatalogCategory[]> {
   try {
-    const response = await fetch(apiUrl("/api/categories"));
-    if (!response.ok) throw new Error("Unable to load categories.");
-    const result = await response.json() as { success: boolean; data: CatalogCategory[] };
+    const result = await cachedJson<{ success: boolean; data: CatalogCategory[] }>("/api/categories");
     if (!result.success) throw new Error("Unable to load categories.");
     return result.data.length ? result.data : fallbackCategories();
   } catch {
