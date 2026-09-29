@@ -56,9 +56,9 @@ export function Logo({
             compact
               ? "text-[0.5rem] sm:text-[0.55rem]"
               : "text-[0.55rem] sm:text-[0.6rem] lg:text-[0.68rem]",
-            // Navy for the wordmark. #000080 is a deeper, truer navy than the
-            // site's #0B2D5B; `light` stays white for dark headers.
-            tone === "light" ? "text-white" : "text-[#000080]",
+            // The brand navy, the same #0B2D5B used by the theme, the PWA
+            // splash and the bottom tab bar. `light` stays white for dark headers.
+            tone === "light" ? "text-white" : "text-[#0B2D5B]",
           )}
         >
           {name}

@@ -2,7 +2,15 @@ import { Icon } from "@/components/common/Icon";
 import { supplyRoute } from "@/data/supply-route";
 import type { IconName } from "@/types/common";
 
-export function RouteTimeline() {
+/**
+ * @param limit  Show only the first N steps. The home page passes 6 so the
+ *               section stays a teaser — "See the full export process" leads to
+ *               /export-process, which renders all twelve. Six also fills the
+ *               desktop `grid-cols-6` exactly, so the preview is one clean row.
+ */
+export function RouteTimeline({ limit }: { limit?: number } = {}) {
+  const steps = typeof limit === "number" ? supplyRoute.slice(0, limit) : supplyRoute;
+
   return (
     <div>
       {/* =========================================
@@ -13,12 +21,12 @@ export function RouteTimeline() {
 
           {/* Main connecting line */}
           <div
-            className="absolute left-0 right-0 top-[27px] h-px bg-primary/15"
+            className="absolute left-0 right-0 top-[27px] h-px bg-primary/30"
             aria-hidden
           />
 
           <ol className="relative grid grid-cols-6 gap-x-8 gap-y-14">
-            {supplyRoute.map((step, index) => (
+            {steps.map((step, index) => (
               <li
                 key={step.id}
                 className="group relative"
@@ -29,7 +37,7 @@ export function RouteTimeline() {
                     className="
                       flex size-14 items-center justify-center
                       rounded-full
-                      border border-primary/15
+                      border border-primary/25
                       bg-card
                       text-primary
                       transition-all duration-300
@@ -76,11 +84,11 @@ export function RouteTimeline() {
                 </div>
 
                 {/* Direction indicator */}
-                {index < supplyRoute.length - 1 ? (
+                {index < steps.length - 1 ? (
                   <span
                     className="
                       absolute left-[calc(100%+8px)] top-[27px]
-                      text-primary/25
+                      text-primary/40
                     "
                     aria-hidden
                   >
@@ -97,8 +105,8 @@ export function RouteTimeline() {
           MOBILE / TABLET — VERTICAL JOURNEY
       ========================================== */}
       <div className="lg:hidden">
-        <ol className="relative ml-3 border-l border-primary/15 pl-8">
-          {supplyRoute.map((step, _index) => (
+        <ol className="relative ml-3 border-l border-primary/35 pl-8">
+          {steps.map((step, _index) => (
             <li
               key={step.id}
               className="group relative pb-10 last:pb-0"
@@ -109,7 +117,7 @@ export function RouteTimeline() {
                   absolute -left-[49px] top-0
                   flex size-10 items-center justify-center
                   rounded-full
-                  border border-primary/15
+                  border border-primary/25
                   bg-card
                   text-primary
                   transition-all duration-300
@@ -131,7 +139,7 @@ export function RouteTimeline() {
                     {String(step.id).padStart(2, "0")}
                   </span>
 
-                  <span className="h-px w-6 bg-primary/15" />
+                  <span className="h-px w-6 bg-primary/35" />
 
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     {step.shortTitle}

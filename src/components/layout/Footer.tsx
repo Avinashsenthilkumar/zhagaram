@@ -36,6 +36,7 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-[1.3fr_2fr]">
           <div>
             <Link to="/" aria-label="Home" className="inline-flex items-center"><img loading="lazy" decoding="async" src={settings.logo ?? "/logo.png"} alt={settings.companyName} className="h-16 w-auto max-w-[14rem] rounded-sm bg-white object-contain" /></Link>
+            <p className="mt-3 whitespace-nowrap text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-primary-foreground">{settings.companyName}</p>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-primary-foreground/70">{footerCopy.tagline}</p>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-primary-foreground/55">{footerCopy.blurb}</p>
           </div>

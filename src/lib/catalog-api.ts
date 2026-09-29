@@ -35,7 +35,10 @@ export function mapApiProduct(item: ApiProduct): Product {
     description: item.description || fallback?.description,
     image: apiResourceUrl(item.image) || fallback?.image || "",
     icon: fallback?.icon || "box",
-    features: item.features.length ? item.features : fallback?.features,
+    // Always an array. A product added through the admin panel has no entry in
+    // the static fallback list, so `fallback?.features` is undefined — and any
+    // consumer doing `.map` or `.join` on that crashes the page it is on.
+    features: item.features?.length ? item.features : (fallback?.features ?? []),
   };
 }
 

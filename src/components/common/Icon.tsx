@@ -67,6 +67,10 @@ export function Icon({
   name: IconName;
   className?: string;
 }) {
-  const Cmp = icons[name];
+  // `icons[name]` is undefined for any name not in the map, and rendering
+  // <undefined /> throws "Element type is invalid", which unmounts the entire
+  // page — a blank screen from one bad string. Icon names reach here from
+  // database rows now that products are editable, so the fallback matters.
+  const Cmp = icons[name] ?? Box;
   return <Cmp className={className} strokeWidth={1.6} aria-hidden />;
 }

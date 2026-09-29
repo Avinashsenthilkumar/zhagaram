@@ -12,7 +12,7 @@ export function SupplyRoute({ preview = false }: { preview?: boolean }) {
           description="The same path every consignment follows — from farmers and trusted suppliers to importers, distributors, and customers."
         />
         <div className="mt-12">
-          <RouteTimeline />
+          <RouteTimeline limit={preview ? 6 : undefined} />
         </div>
       </Container>
     </section>

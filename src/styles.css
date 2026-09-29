@@ -195,7 +195,19 @@
     margin: 0;
     text-wrap: balance;
     letter-spacing: -0.03em;
-    color: var(--color-foreground);
+    /*
+     * `inherit`, NOT `var(--color-foreground)`.
+     *
+     * Pinning the colour here meant a heading inside a dark section could not
+     * be white: `<div class="bg-primary text-primary-foreground"><h2>` still
+     * painted the h2 dark navy on navy, effectively invisible. It hit the
+     * products CTA ("Need a specific lot?"), the export CTA and the footer.
+     *
+     * `body` already sets `color: var(--color-foreground)`, so plain headings
+     * are unchanged — they now just follow an ancestor that sets a colour on
+     * purpose, which is what every one of those sections was assuming.
+     */
+    color: inherit;
   }
 
   p {

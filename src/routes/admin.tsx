@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type Re
 import { LogoSpinner } from "@/components/common/LogoSpinner";
 import { compressImageFile, formatBytes } from "@/lib/image-compress";
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { Boxes, LayoutDashboard, PackagePlus, Pencil, Plus, Settings, ShieldCheck, Star, Trash2, X } from "lucide-react";
+import { Boxes, LayoutDashboard, Loader2, PackagePlus, Pencil, Plus, Settings, ShieldCheck, Star, Trash2, X } from "lucide-react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { apiResourceUrl, apiUrl } from "@/lib/api-url";
 
@@ -147,7 +147,7 @@ function AdminDashboard() {
   function newCategory() { resetCategory(); setCategoryModal(true); }
   function newProduct() { resetProduct(); setProductModal(true); }
   function editCategory(category: Category) { setEditingCategoryId(category.id); setCategoryForm({ name: category.name, slug: category.slug, description: category.description || "", imageData: "", imageMimeType: "" }); setCategoryModal(true); }
-  function editProduct(product: Product) { const imageData = product.image?.startsWith("data:") ? product.image : ""; setEditingProductId(product.id); setProductForm({ name: product.name, slug: product.slug, categoryId: product.categoryId || "", shortDescription: product.shortDescription || "", description: product.description || "", images: product.images.join(", "), features: product.features.join(", "), imageData, imageMimeType: mimeFromDataUrl(imageData) }); setProductModal(true); }
+  function editProduct(product: Product) { const imageData = product.image?.startsWith("data:") ? product.image : ""; setEditingProductId(product.id); setProductForm({ name: product.name, slug: product.slug, categoryId: product.categoryId || "", shortDescription: product.shortDescription || "", description: product.description || "", images: (product.images ?? []).join(", "), features: (product.features ?? []).join(", "), imageData, imageMimeType: mimeFromDataUrl(imageData) }); setProductModal(true); }
 
   if (isLoading)
     return (
@@ -201,8 +201,8 @@ function AdminDashboard() {
         </div>
       </main>
 
-      {categoryModal ? <Modal title={editingCategoryId ? "Edit category" : "Create category"} onClose={resetCategory}><form className="space-y-4" onSubmit={submitCategory}><TextField label="Name" value={categoryForm.name} onChange={(value) => setCategoryForm({ ...categoryForm, name: value })} required /><TextField label="Slug" value={categoryForm.slug} onChange={(value) => setCategoryForm({ ...categoryForm, slug: value })} required /><TextArea label="Description" value={categoryForm.description} onChange={(value) => setCategoryForm({ ...categoryForm, description: value })} /><ImageField label="Category image" value={categoryForm.imageData} existingUrl={editingCategoryId ? (categories.find((c) => c.id === editingCategoryId)?.image ?? null) : null} onChange={(imageData, imageMimeType) => setCategoryForm({ ...categoryForm, imageData, imageMimeType })} /><div className="flex justify-end gap-3 pt-2"><button type="button" onClick={resetCategory} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold">Cancel</button><SubmitButton disabled={isSaving}>{editingCategoryId ? "Save category" : "Create category"}</SubmitButton></div></form></Modal> : null}
-      {productModal ? <Modal title={editingProductId ? "Edit product" : "Create product"} onClose={resetProduct}><form className="grid gap-4 sm:grid-cols-2" onSubmit={submitProduct}><TextField label="Product name" value={productForm.name} onChange={(value) => setProductForm({ ...productForm, name: value })} required /><TextField label="Slug" value={productForm.slug} onChange={(value) => setProductForm({ ...productForm, slug: value })} required /><SelectField label="Category" value={productForm.categoryId} onChange={(value) => setProductForm({ ...productForm, categoryId: value })} options={categories.map((category) => [category.id, category.name])} /><TextField label="Short description" value={productForm.shortDescription} onChange={(value) => setProductForm({ ...productForm, shortDescription: value })} /><div className="sm:col-span-2"><TextArea label="Description" value={productForm.description} onChange={(value) => setProductForm({ ...productForm, description: value })} /></div><ImageField label="Product image" value={productForm.imageData} existingUrl={editingProductId ? (products.find((p) => p.id === editingProductId)?.image ?? null) : null} onChange={(imageData, imageMimeType) => setProductForm({ ...productForm, imageData, imageMimeType })} /><TextField label="Features (comma separated)" value={productForm.features} onChange={(value) => setProductForm({ ...productForm, features: value })} /><div className="sm:col-span-2 flex justify-end gap-3 pt-2"><button type="button" onClick={resetProduct} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold">Cancel</button><SubmitButton disabled={isSaving}>{editingProductId ? "Save product" : "Create product"}</SubmitButton></div></form></Modal> : null}
+      {categoryModal ? <Modal title={editingCategoryId ? "Edit category" : "Create category"} onClose={resetCategory} busy={isSaving}><form className="space-y-4" onSubmit={submitCategory}><TextField label="Name" value={categoryForm.name} onChange={(value) => setCategoryForm({ ...categoryForm, name: value })} required /><TextField label="Slug" value={categoryForm.slug} onChange={(value) => setCategoryForm({ ...categoryForm, slug: value })} required /><TextArea label="Description" value={categoryForm.description} onChange={(value) => setCategoryForm({ ...categoryForm, description: value })} /><ImageField label="Category image" value={categoryForm.imageData} existingUrl={editingCategoryId ? (categories.find((c) => c.id === editingCategoryId)?.image ?? null) : null} onChange={(imageData, imageMimeType) => setCategoryForm({ ...categoryForm, imageData, imageMimeType })} /><div className="flex justify-end gap-3 pt-2"><button type="button" onClick={resetCategory} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold">Cancel</button><SubmitButton disabled={isSaving}>{editingCategoryId ? "Save category" : "Create category"}</SubmitButton></div></form></Modal> : null}
+      {productModal ? <Modal title={editingProductId ? "Edit product" : "Create product"} onClose={resetProduct} busy={isSaving}><form className="grid gap-4 sm:grid-cols-2" onSubmit={submitProduct}><TextField label="Product name" value={productForm.name} onChange={(value) => setProductForm({ ...productForm, name: value })} required /><TextField label="Slug" value={productForm.slug} onChange={(value) => setProductForm({ ...productForm, slug: value })} required /><SelectField label="Category" value={productForm.categoryId} onChange={(value) => setProductForm({ ...productForm, categoryId: value })} options={categories.map((category) => [category.id, category.name])} /><TextField label="Short description" value={productForm.shortDescription} onChange={(value) => setProductForm({ ...productForm, shortDescription: value })} /><div className="sm:col-span-2"><TextArea label="Description" value={productForm.description} onChange={(value) => setProductForm({ ...productForm, description: value })} /></div><ImageField label="Product image" value={productForm.imageData} existingUrl={editingProductId ? (products.find((p) => p.id === editingProductId)?.image ?? null) : null} onChange={(imageData, imageMimeType) => setProductForm({ ...productForm, imageData, imageMimeType })} /><TextField label="Features (comma separated)" value={productForm.features} onChange={(value) => setProductForm({ ...productForm, features: value })} /><div className="sm:col-span-2 flex justify-end gap-3 pt-2"><button type="button" onClick={resetProduct} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold">Cancel</button><SubmitButton disabled={isSaving}>{editingProductId ? "Save product" : "Create product"}</SubmitButton></div></form></Modal> : null}
     </div>
   );
 }
@@ -459,11 +459,50 @@ function ProductsSection({
 
 function Pagination({ page, pages, onPage }: { page: number; pages: number; onPage: (page: number) => void }) { if (pages <= 1) return null; return <div className="mt-6 flex items-center justify-center gap-2"><button type="button" disabled={page === 1} onClick={() => onPage(page - 1)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-40">Previous</button><span className="px-3 text-sm text-slate-500">Page {page} of {pages}</span><button type="button" disabled={page === pages} onClick={() => onPage(page + 1)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-40">Next</button></div>; }
 
-function Modal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) { return <div className="fixed inset-0 z-[100] grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true"><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"><div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 sm:px-6"><h2 className="text-lg font-semibold text-[#123d2b]">{title}</h2><button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button></div><div className="p-5 sm:p-6">{children}</div></div></div>; }
+/**
+ * `busy` covers the dialog while a save is in flight.
+ *
+ * Saving a product uploads a base64 image and then reloads the whole dashboard,
+ * which takes a visible moment. Previously the button simply greyed out and the
+ * panel looked frozen, so it was natural to click again or close the dialog
+ * mid-request. The overlay makes the wait legible and blocks both.
+ */
+function Modal({ title, children, onClose, busy = false }: { title: string; children: ReactNode; onClose: () => void; busy?: boolean }) {
+  return (
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 sm:px-6">
+          <h2 className="text-lg font-semibold text-[#123d2b]">{title}</h2>
+          <button type="button" onClick={onClose} disabled={busy} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-40"><X size={18} /></button>
+        </div>
+        <div className="p-5 sm:p-6">{children}</div>
+        {busy ? (
+          <div className="absolute inset-0 z-20 grid place-items-center bg-white/70 backdrop-blur-[1px]" aria-live="polite">
+            <div className="flex flex-col items-center gap-3">
+              <LogoSpinner size="md" label="Saving" />
+              <p className="text-sm font-medium text-[#123d2b]">Saving…</p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 function TextField({ label, value, onChange, required = false }: { label: string; value: string; onChange: (value: string) => void; required?: boolean }) { return <label className="block text-sm font-medium text-slate-700">{label}<input required={required} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-[#075333] focus:ring-2 focus:ring-[#075333]/15" /></label>; }
 function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="block text-sm font-medium text-slate-700">{label}<textarea value={value} onChange={(event) => onChange(event.target.value)} rows={4} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-[#075333] focus:ring-2 focus:ring-[#075333]/15" /></label>; }
 function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) { return <label className="block text-sm font-medium text-slate-700">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"><option value="">Select category</option>{options.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>; }
-function SubmitButton({ disabled, children }: { disabled?: boolean; children: ReactNode }) { return <button type="submit" disabled={disabled} className="rounded-lg bg-[#075333] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-60">{children}</button>; }
+function SubmitButton({ disabled, children }: { disabled?: boolean; children: ReactNode }) {
+  return (
+    <button
+      type="submit"
+      disabled={disabled}
+      className="inline-flex items-center gap-2 rounded-lg bg-[#075333] px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-wait disabled:opacity-60"
+    >
+      {disabled ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+      {children}
+    </button>
+  );
+}
 function ImageField({
   label,
   value,
