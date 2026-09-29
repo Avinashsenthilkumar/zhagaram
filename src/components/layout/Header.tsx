@@ -50,18 +50,18 @@ export function Header() {
 
   /*
    * HOME
-   * ─────────────────────────────────
-   * Top      → transparent
-   * Scrolled → cream glass
+   * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   * Top      â†’ transparent
+   * Scrolled â†’ cream glass
    *
    * INNER PAGES
-   * ─────────────────────────────────
-   * Always   → cream glass
+   * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   * Always   â†’ cream glass
    */
 
   const solidHeader = !isHome || scrolled || open;
 
-  const tone = solidHeader ? "dark" : "light";
+  const tone = "dark" as const;
 
   return (
     <header
