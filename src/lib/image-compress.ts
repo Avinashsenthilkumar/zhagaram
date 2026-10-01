@@ -61,7 +61,10 @@ function supportsWebp(): boolean {
   }
 }
 
-export async function compressImageFile(file: File): Promise<CompressedImage> {
+export async function compressImageFile(
+  file: File,
+  options: { preserveAlpha?: boolean } = {},
+): Promise<CompressedImage> {
   const originalDataUrl = await readAsDataUrl(file);
   const originalBytes = file.size;
 
@@ -108,13 +111,25 @@ export async function compressImageFile(file: File): Promise<CompressedImage> {
   }
 
   // Flatten onto white: PNG transparency becomes black under JPEG otherwise.
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, width, height);
+  //
+  // A LOGO MUST NOT BE FLATTENED. This white rectangle is exactly what put a
+  // white box behind the header logo: upload a transparent PNG through
+  // /admin/settings and the canvas painted white underneath it before encoding,
+  // baking the box into the stored image. Photographs are opaque so flattening
+  // them costs nothing; brand marks are the case that needs the alpha kept.
+  if (!options.preserveAlpha) {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+  }
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
   context.drawImage(image, 0, 0, width, height);
 
-  const mimeType = supportsWebp() ? "image/webp" : "image/jpeg";
+  // JPEG has no alpha channel at all, so transparency has to fall back to PNG
+  // rather than to JPEG. Both WebP and PNG keep it.
+  const mimeType = options.preserveAlpha
+    ? (supportsWebp() ? "image/webp" : "image/png")
+    : (supportsWebp() ? "image/webp" : "image/jpeg");
   const dataUrl = canvas.toDataURL(mimeType, QUALITY);
   const compressedBytes = dataUrlBytes(dataUrl);
 

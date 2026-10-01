@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { WhatsAppButton } from "@/components/common/WhatsAppButton";
 import { AppSplash } from "@/components/common/AppSplash";
 import { useRouterState } from "@tanstack/react-router";
 
@@ -29,6 +30,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <main className="has-tabbar flex-1 pt-[4.25rem]">{children}</main>
       <Footer />
       <ScrollToTop />
+      <WhatsAppButton />
       <BottomTabBar />
     </div>
   );

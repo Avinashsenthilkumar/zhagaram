@@ -56,6 +56,11 @@ export function ContactForm({
   const [values, setValues] = useState<FormValues>(emptyValues as FormValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  // The API says exactly what went wrong ("You can only send testing emails to
+  // your own email address", a missing key, a rejected sender). The form used to
+  // throw that away and print one fixed sentence, which turned every mail
+  // problem into a guessing game.
+  const [errorMessage, setErrorMessage] = useState("");
   const [categoryOptions, setCategoryOptions] = useState(productOptions);
 
   useEffect(() => {
@@ -99,6 +104,7 @@ export function ContactForm({
     }
 
     setErrors({});
+    setErrorMessage("");
     setStatus("submitting");
 
     try {
@@ -109,7 +115,8 @@ export function ContactForm({
       }
       setStatus("success");
       setValues(emptyValues as FormValues);
-    } catch {
+    } catch (submitError) {
+      setErrorMessage(submitError instanceof Error ? submitError.message : "");
       setStatus("error");
     }
   }
@@ -230,7 +237,7 @@ export function ContactForm({
 
       {status === "error" ? (
         <p className="mt-4 text-sm text-red-700" role="alert">
-          We couldn't send your enquiry right now. Please try again.
+          {errorMessage || "We couldn't send your enquiry right now. Please try again."}
         </p>
       ) : null}
 

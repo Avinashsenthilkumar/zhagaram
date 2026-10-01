@@ -479,7 +479,8 @@ function LogoField({
         onPick(dataUrl, "image/svg+xml");
         setNote(`SVG, ${formatBytes(file.size)}.`);
       } else {
-        const result = await compressImageFile(file);
+        // preserveAlpha: a logo keeps its transparent background.
+        const result = await compressImageFile(file, { preserveAlpha: true });
         onPick(result.dataUrl, result.mimeType);
         setNote(
           result.compressedBytes < result.originalBytes

@@ -50,17 +50,31 @@ export function Header() {
 
   /*
    * HOME
-   * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-   * Top      â†’ transparent
-   * Scrolled â†’ cream glass
+   * ─────────────────────────────────
+   * Top      → transparent
+   * Scrolled → cream glass
    *
    * INNER PAGES
-   * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-   * Always   â†’ cream glass
+   * ─────────────────────────────────
+   * Always   → cream glass
    */
 
   const solidHeader = !isHome || scrolled || open;
 
+  /*
+   * ALWAYS "dark", even while the header is transparent.
+   *
+   * `tone` used to follow `solidHeader`, so at the top of the home page it was
+   * "light" — white logo text and white nav links. That is correct over a dark
+   * hero image, and this hero is not one: `Hero.tsx` is `bg-light-grey
+   * text-primary`. The result was #FFFFFF text on a #F4F6F9 background, a
+   * contrast ratio of 1.05:1 — the wordmark and the whole nav were invisible
+   * until you scrolled.
+   *
+   * The background still fades from transparent to cream glass on scroll; only
+   * the text colour is pinned. If a dark hero is ever introduced, restore
+   * `solidHeader ? "dark" : "light"` here.
+   */
   const tone = "dark" as const;
 
   return (

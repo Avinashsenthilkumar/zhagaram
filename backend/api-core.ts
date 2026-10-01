@@ -897,7 +897,13 @@ export async function handleEnquiryRequest(req: any, res: any) {
   const body = parsed.data;
   const isSupplierForm = body.formType === "supplier";
   if (!process.env.MAIL_TO) {
-    return res.status(500).json({ success: false, message: "MAIL_TO environment variable is not configured." });
+    // Name the variable in the LOG, not in the response: the visitor cannot act
+    // on it and it tells a stranger how the deployment is wired.
+    console.error("Enquiry rejected: MAIL_TO is not configured.");
+    return res.status(500).json({
+      success: false,
+      message: "Enquiries are not configured to be delivered yet. Please contact us directly.",
+    });
   }
 
   const subject = isSupplierForm ? `New Supplier Enquiry - ${body.product}` : `New Customer Enquiry - ${body.product}`;
@@ -929,9 +935,18 @@ export async function handleEnquiryRequest(req: any, res: any) {
     });
   } catch (error) {
     console.error("Enquiry submission error", error);
+
+    // Pass the mail provider's own reason through. These messages are about the
+    // SITE's configuration, not the visitor's data, and they are what turns
+    // "mail is not working" into a one-minute fix instead of a log hunt.
+    const detail = error instanceof Error ? error.message : "";
+    const isProviderMessage = /resend|domain|verify|testing emails|api key|from address/i.test(detail);
+
     return res.status(500).json({
       success: false,
-      message: "Something went wrong while sending the enquiry.",
+      message: isProviderMessage
+        ? `Email could not be sent: ${detail}`
+        : "Something went wrong while sending the enquiry.",
     });
   }
 }

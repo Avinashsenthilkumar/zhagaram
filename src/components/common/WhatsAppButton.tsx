@@ -1,8 +1,20 @@
+import { useSiteSettings } from "@/lib/site-settings";
+
+/** Used when the owner has not set a WhatsApp number in /admin/settings. */
+const FALLBACK_NUMBER = "919385356697";
+
 export function WhatsAppButton() {
-  const phoneNumber = "919XXXXXXXXX";
+  const settings = useSiteSettings();
+
+  // wa.me wants digits only, with the country code and no "+" or spaces.
+  // Whatever the owner types ("+91 93853 56697", "093853 56697") is normalised
+  // here, and a 10-digit Indian number gets the 91 prefix it needs.
+  const digits = (settings.whatsapp ?? "").replace(/\D/g, "");
+  const normalised = digits.length === 10 ? `91${digits}` : digits.replace(/^0+/, "");
+  const phoneNumber = normalised.length >= 11 ? normalised : FALLBACK_NUMBER;
 
   const message = encodeURIComponent(
-    "Hello ZHAGARAM EXIM LLP, I would like to know more about your products and export services."
+    `Hello ${settings.companyName}, I would like to know more about your products and export services.`
   );
 
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
@@ -12,12 +24,16 @@ export function WhatsAppButton() {
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat with ZHAGARAM EXIM LLP on WhatsApp"
+      aria-label={`Chat with ${settings.companyName} on WhatsApp`}
       title="Chat with us on WhatsApp"
+      // bottom-40 / right-10: the same right-hand column as ScrollToTop
+      // (right-10 bottom-25), stacked above it, and clear of the mobile tab bar
+      // which is 4.25rem tall. The original bottom-6 right-6 put this button
+      // underneath both.
       className="
         fixed
-        bottom-6
-        right-6
+        bottom-40
+        right-10
         z-[90]
         flex
         size-14
