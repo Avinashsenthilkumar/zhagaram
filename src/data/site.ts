@@ -7,7 +7,7 @@ export const siteConfig: SiteConfig = {
   description:
     "India-based export and import company supplying quality agricultural and food products to international markets.",
   locale: "en",
-  url: "https://zhagaramexim.com",
+  url: "https://zhaexim.com",
 };
 
 export const companyCopy: CompanyCopy = {

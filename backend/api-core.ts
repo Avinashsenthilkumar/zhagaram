@@ -20,7 +20,7 @@ import { prisma } from "./db";
 import { comparePassword, getAuthUserFromRequest, hashPassword, requireAdmin, signJwt } from "./auth";
 import { sendEmail } from "./mailer";
 
-const siteUrl = process.env.APP_URL || process.env.PUBLIC_SITE_URL || "https://zhagaramexim.com";
+const siteUrl = process.env.APP_URL || process.env.PUBLIC_SITE_URL || "https://zhaexim.com";
 
 
 const loginSchema = z.object({

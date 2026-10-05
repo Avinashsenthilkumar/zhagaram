@@ -215,7 +215,7 @@ function SettingsPage() {
         <Card title="Contact" description="Shown in the footer and on the contact page.">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Phone" value={form.phone} onChange={(value) => update("phone", value)} placeholder="+91 79040 06912" />
-            <Field label="Email" value={form.email} onChange={(value) => update("email", value)} placeholder="sales@zhagaramexim.com" type="email" />
+            <Field label="Email" value={form.email} onChange={(value) => update("email", value)} placeholder="sales@zhaexim.com" type="email" />
             <Field label="WhatsApp number" value={form.whatsapp} onChange={(value) => update("whatsapp", value)} placeholder="+91 79040 06912" />
             <Field label="LinkedIn URL" value={form.linkedin} onChange={(value) => update("linkedin", value)} placeholder="https://linkedin.com/company/…" />
             <Field label="Instagram URL" value={form.instagram} onChange={(value) => update("instagram", value)} placeholder="https://instagram.com/…" />
