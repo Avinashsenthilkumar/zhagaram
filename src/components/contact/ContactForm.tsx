@@ -191,11 +191,11 @@ export function ContactForm({
           </>
         ) : (
           <>
-            <Field id="name" label="Name" value={values.name ?? ""} error={errors.name} onChange={(v) => update("name", v)} />
-            <Field id="company" label="Company Name" value={values.company ?? ""} error={errors.company} onChange={(v) => update("company", v)} />
-            <Field id="email" label="Email" type="email" value={values.email ?? ""} error={errors.email} onChange={(v) => update("email", v)} />
-            <Field id="phone" label="Phone" type="tel" value={values.phone ?? ""} error={errors.phone} onChange={(v) => update("phone", v)} />
-            <Field id="country" label="Country" value={values.country ?? ""} error={errors.country} onChange={(v) => update("country", v)} />
+          <Field id="name" label="Name" value={values.name ?? ""} error={errors.name} onChange={(v) => update("name", v)} />
+<Field id="company" label="Company Name (optional)" value={values.company ?? ""} error={errors.company} onChange={(v) => update("company", v)} />
+<Field id="email" label="Email" type="email" value={values.email ?? ""} error={errors.email} onChange={(v) => update("email", v)} />
+<Field id="phone" label="Phone" type="tel" value={values.phone ?? ""} error={errors.phone} onChange={(v) => update("phone", v)} />
+<Field id="country" label="Country (optional)" value={values.country ?? ""} error={errors.country} onChange={(v) => update("country", v)} />
             <div>
               <label htmlFor="product" className="mb-1.5 block text-sm font-medium">
                 Product

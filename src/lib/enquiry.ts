@@ -7,20 +7,20 @@ export const supplierEnquirySchema = z.object({
   name: z.string().trim().min(2, "Please enter your name."),
   email: z.string().trim().email("Please enter a valid email address."),
   phone: z.string().trim().min(6, "Please enter a phone number."),
-  gstNumber: z.string().trim().min(3, "Please enter your GST number."),
-  product: z.string().trim().min(1, "Please select a product."),
-  message: z.string().trim().min(10, "Please add a short message."),
+  gstNumber: z.string().trim().optional(),
+  product: z.string().trim().optional(),
+  message: z.string().trim().optional(),
 });
 
 export const customerEnquirySchema = z.object({
   name: z.string().trim().min(2, "Please enter your name."),
-  company: z.string().trim().min(2, "Please enter your company name."),
   email: z.string().trim().email("Please enter a valid email address."),
   phone: z.string().trim().min(6, "Please enter a phone number."),
-  country: z.string().trim().min(2, "Please enter your country."),
-  product: z.string().trim().min(1, "Please select a product."),
-  quantity: z.string().trim().min(1, "Please enter an approximate quantity."),
-  message: z.string().trim().min(10, "Please add a short message."),
+  company: z.string().trim().optional(),
+  country: z.string().trim().optional(),
+  product: z.string().trim().optional(),
+  quantity: z.string().trim().optional(),
+  message: z.string().trim().optional(),
 });
 
 export type SupplierEnquiryInput = z.infer<typeof supplierEnquirySchema>;

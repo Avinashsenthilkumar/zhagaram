@@ -21,7 +21,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as AdminReviewsRouteImport } from './routes/admin/reviews'
-import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
 
@@ -85,11 +84,6 @@ const AdminReviewsRoute = AdminReviewsRouteImport.update({
   path: '/reviews',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AdminRoute,
-} as any)
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
@@ -114,7 +108,6 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/admin/reviews': typeof AdminReviewsRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/products/': typeof ProductsIndexRoute
 }
@@ -131,7 +124,6 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/admin/reviews': typeof AdminReviewsRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/products': typeof ProductsIndexRoute
 }
@@ -149,7 +141,6 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/admin/reviews': typeof AdminReviewsRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/products/': typeof ProductsIndexRoute
 }
@@ -168,7 +159,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/terms-and-conditions'
     | '/admin/reviews'
-    | '/admin/settings'
     | '/products/$slug'
     | '/products/'
   fileRoutesByTo: FileRoutesByTo
@@ -185,7 +175,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/terms-and-conditions'
     | '/admin/reviews'
-    | '/admin/settings'
     | '/products/$slug'
     | '/products'
   id:
@@ -202,7 +191,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/terms-and-conditions'
     | '/admin/reviews'
-    | '/admin/settings'
     | '/products/$slug'
     | '/products/'
   fileRoutesById: FileRoutesById
@@ -309,13 +297,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReviewsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/products/': {
       id: '/products/'
       path: '/products'
@@ -335,12 +316,10 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminReviewsRoute: typeof AdminReviewsRoute
-  AdminSettingsRoute: typeof AdminSettingsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminReviewsRoute: AdminReviewsRoute,
-  AdminSettingsRoute: AdminSettingsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

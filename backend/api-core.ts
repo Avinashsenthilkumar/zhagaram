@@ -112,21 +112,21 @@ const supplierEnquiryRequestSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(320),
   phone: z.string().trim().min(6).max(40),
-  gstNumber: z.string().trim().min(3).max(50),
-  product: z.string().trim().min(1).max(180),
-  message: z.string().trim().min(10).max(5000),
+  gstNumber: z.string().trim().max(50).optional(),
+  product: z.string().trim().max(180).optional(),
+  message: z.string().trim().max(5000).optional(),
 });
 
 const customerEnquiryRequestSchema = z.object({
   formType: z.literal("customer"),
   name: z.string().trim().min(2).max(120),
-  company: z.string().trim().min(2).max(160),
   email: z.string().trim().email().max(320),
   phone: z.string().trim().min(6).max(40),
-  country: z.string().trim().min(2).max(120),
-  product: z.string().trim().min(1).max(180),
-  quantity: z.string().trim().min(1).max(120),
-  message: z.string().trim().min(10).max(5000),
+  company: z.string().trim().max(160).optional(),
+  country: z.string().trim().max(120).optional(),
+  product: z.string().trim().max(180).optional(),
+  quantity: z.string().trim().max(120).optional(),
+  message: z.string().trim().max(5000).optional(),
 });
 
 const allowedImageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
