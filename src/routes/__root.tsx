@@ -12,9 +12,21 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       {
+        /*
+         * `maximum-scale=5` stays: pinch-zoom is an accessibility right, and
+         * clamping it to 1 is the wrong way to stop the form zoom -- iOS
+         * ignores it for focus zoom anyway on recent versions, and it breaks
+         * zoom for everyone else. The focus zoom is fixed properly in
+         * styles.css, by keeping every form control at 16px or larger.
+         *
+         * `interactive-widget=resizes-content` makes the layout viewport
+         * shrink when the on-screen keyboard appears, so a focused field is
+         * scrolled into the remaining space instead of being covered by the
+         * keyboard.
+         */
         name: "viewport",
         content:
-          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5",
+          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5, interactive-widget=resizes-content",
       },
       { title: pageTitle() },
       { name: "description", content: pageDescription() },

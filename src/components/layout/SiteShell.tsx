@@ -26,8 +26,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <AppSplash />
       <Header />
-      {/* has-tabbar reserves room for the fixed mobile tab bar. */}
-      <main className="has-tabbar flex-1 pt-[4.25rem]">{children}</main>
+      {/*
+        `pt-header` and `has-tabbar` both come from styles.css and read the
+        --header-offset / --tabbar-offset variables, which include the iPhone's
+        safe-area insets. The old `pt-[4.25rem]` was a hard-coded guess that
+        disagreed with the header's own `h-16` by 4px and knew nothing about
+        the notch.
+      */}
+      <main className="pt-header has-tabbar flex-1">{children}</main>
       <Footer />
       <ScrollToTop />
       <WhatsAppButton />

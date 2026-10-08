@@ -40,11 +40,38 @@ export function Header() {
     };
   }, []);
 
+  /*
+   * Scroll lock while the mobile menu is open.
+   *
+   * `body { overflow: hidden }` on its own does not hold on iOS Safari -- the
+   * page still rubber-bands behind the menu, and when the lock is released the
+   * browser has usually forgotten where you were and drops you at the top.
+   * Pinning the body with `position: fixed` at a negative offset locks it
+   * properly, and the offset is restored on close.
+   */
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    if (!open) return;
+
+    const scrollY = window.scrollY;
+    const { body } = document;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = "";
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
     };
   }, [open]);
 
@@ -82,6 +109,10 @@ export function Header() {
       className={cn(
         "fixed inset-x-0 top-0 z-[100]",
         "transition-all duration-300",
+        // Pushes the bar below the status bar / notch when the site runs
+        // full-screen from the iPhone home screen. Without it the logo and the
+        // menu button sat underneath the clock.
+        "pt-[var(--safe-top)]",
 
         solidHeader
           ? [
@@ -97,14 +128,19 @@ export function Header() {
       )}
     >
       <Container
-  className={cn(
-    "flex items-center justify-between",
-    "transition-all duration-300",
-    solidHeader
-      ? "h-16 sm:h-[4.5rem] lg:h-[5rem] xl:h-[5.5rem]"
-      : "h-16 sm:h-[4.75rem] lg:h-[5.25rem] xl:h-[5.75rem]",
-  )}
->
+        className={cn(
+          "px-safe flex items-center justify-between gap-3",
+          "transition-all duration-300",
+          /*
+            Height now comes from --header-h, the same variable <main>'s top
+            padding and every hero's negative margin read. The old pair of
+            class lists let the header grow 0.25rem taller at the top of the
+            home page while nothing else moved, so the hero shifted by a few
+            pixels on first scroll.
+          */
+          "h-[var(--header-h)]",
+        )}
+      >
         {/* LOGO */}
         <div className="shrink-0">
           <Logo tone={tone} />

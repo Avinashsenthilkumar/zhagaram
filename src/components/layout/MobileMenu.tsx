@@ -19,12 +19,21 @@ export function MobileMenu({
       hidden={!open}
       className={cn(
         "border-t border-primary/10 bg-white lg:hidden",
+        /*
+          The menu lives inside the fixed header, so it has no page scroll to
+          borrow. With six destinations plus the CTA it ran past the bottom of
+          a small phone -- and in landscape past almost any phone -- with no
+          way to reach the last items. It now scrolls within whatever height is
+          left below the header, and `overscroll-contain` stops that scroll
+          from chaining into the locked page behind it.
+        */
+        "max-h-[calc(100dvh_-_var(--header-offset))] overflow-y-auto overscroll-contain",
         open ? "block" : "hidden",
       )}
     >
       <nav
         aria-label="Mobile"
-        className="flex flex-col px-5 py-5"
+        className="flex flex-col px-5 pb-[calc(1.25rem_+_var(--safe-bottom))] pt-5"
       >
         {mainNavigation.map((item) => {
           const active =

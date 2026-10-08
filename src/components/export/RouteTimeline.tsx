@@ -87,7 +87,7 @@ export function RouteTimeline({ limit }: { limit?: number } = {}) {
                 {index < steps.length - 1 ? (
                   <span
                     className="
-                      absolute left-[calc(100%+8px)] top-[27px]
+                      absolute left-[calc(100%_+_8px)] top-[27px]
                       text-primary/40
                     "
                     aria-hidden

@@ -227,16 +227,69 @@
     outline-offset: -1px;
   }
 
+  /*
+   * Decorative images -- icons, the WhatsApp glyph, logos -- opt out of the
+   * hairline above. On a phone that hairline read as a stray 1px box around
+   * the footer logo and every inline icon, which is the opposite of what a
+   * photo border is for.
+   */
+  img[alt=""],
+  img[aria-hidden="true"],
+  img[data-plain] {
+    outline: none;
+  }
+
+  /*
+   * Media never forces the page wider than the screen. `max-width: 100%` above
+   * only covers <img>; iframes (the contact map) and video need telling too.
+   */
+  iframe,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  /*
+   * Long unbroken strings -- a pasted GST number, an email address, a URL in
+   * the footer -- wrap instead of pushing the layout sideways.
+   */
+  p,
+  li,
+  dd,
+  address,
+  h1,
+  h2,
+  h3,
+  h4 {
+    overflow-wrap: break-word;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 3px;
   }
 }
 
-@media (max-width: 640px) {
-  html {
-    font-size: 15px;
-  }
+/* ===========================================================================
+   MOBILE TYPE SCALE
+   ===========================================================================
+
+   The root font-size used to drop to 15px below 640px. That one line was the
+   cause of the iPhone "the form zooms when I tap a field" bug.
+
+   iOS Safari zooms the viewport whenever a focused input, select or textarea
+   has a COMPUTED font-size under 16px. At a 15px root, `text-sm` (0.875rem)
+   on the enquiry fields computed to 13.1px, and even `text-base` (1rem)
+   computed to 15px -- both under the threshold, so every field zoomed. The
+   page never zooms back out, which is why the layout looked broken afterwards.
+
+   The root now stays at the browser default (16px). Headings that were tuned
+   against the old 15px root use clamp() in their own components instead, so
+   nothing grew past the screen edge in exchange.
+   =========================================================================== */
+html {
+  font-size: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -286,6 +339,42 @@
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /*
+   * One source of truth for the fixed chrome.
+   *
+   * The header height, the <main> top padding and the negative margin every
+   * hero uses to slide under the header were three separate hard-coded values
+   * (h-16 = 4rem, pt-[4.25rem], -mt-[4.25rem]). They disagreed by 4px, and
+   * none of them knew about the notch, so on an iPhone the header content sat
+   * under the status bar and every hero was offset by the wrong amount.
+   */
+  --header-h: 4rem;
+  --tabbar-h: 4.25rem;
+  --header-offset: calc(var(--header-h) + var(--safe-top));
+  --tabbar-offset: calc(var(--tabbar-h) + var(--safe-bottom));
+}
+
+@media (min-width: 640px) {
+  :root {
+    --header-h: 4.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 5rem;
+    /* The tab bar is hidden from lg up, so nothing needs reserving for it. */
+    --tabbar-h: 0rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --header-h: 5.5rem;
+  }
 }
 
 html {
@@ -293,6 +382,111 @@ html {
      the end -- native apps don't do that. */
   overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
+
+  /*
+   * `clip`, not `hidden`.
+   *
+   * `overflow-x: hidden` on <html> turns the root into a scroll container,
+   * which silently breaks `position: sticky` on every descendant and lets the
+   * browser restore a horizontal scroll offset on rotate. `clip` crops the
+   * same overflow without creating a scroll port.
+   */
+  overflow-x: clip;
+
+  /*
+   * Anything scrolled to -- a hash link, or the enquiry form's success panel --
+   * stops below the fixed header instead of underneath it.
+   */
+  scroll-padding-top: calc(var(--header-offset) + 1rem);
+}
+
+/* ===========================================================================
+   FORM CONTROLS -- THE iOS ZOOM FLOOR
+   ===========================================================================
+
+   Belt and braces for the root-font fix above: no matter what utility class a
+   field picks up (`text-sm` on the enquiry form, the unstyled inherit on the
+   admin and login fields), its computed size never drops under 16px on a
+   touch-sized screen, so iOS has no reason to zoom on focus.
+
+   `!important` is deliberate. Tailwind's `text-sm` is a class selector and
+   would otherwise win against any element selector here.
+   =========================================================================== */
+@media (max-width: 1023.98px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ):not([type="submit"]):not([type="button"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+    line-height: 1.45;
+  }
+}
+
+/*
+ * Kill the 300ms double-tap-to-zoom delay on anything tappable, and stop iOS
+ * applying its own chunky native skin to selects and date inputs.
+ */
+a,
+button,
+label,
+select,
+summary,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/*
+ * Drop iOS's native field skin so the project's own radius and shadow show.
+ *
+ * Checkboxes, radios, ranges, files and buttons are excluded by name:
+ * `appearance: none` on those does not restyle them, it erases them -- a
+ * checkbox becomes an invisible 13px box.
+ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ):not([type="color"]):not([type="submit"]):not([type="button"]),
+select,
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  max-width: 100%;
+}
+
+/*
+ * A select needs its own affordance once the native arrow is gone. Drawn with
+ * two gradients rather than an SVG so it inherits `currentColor` and needs no
+ * extra request.
+ *
+ * `!important` on the right padding only: every select in this project also
+ * carries a Tailwind `px-3`, and a class always beats an element selector, so
+ * without it the chevron would sit on top of a long option's text.
+ */
+select {
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% + 1px),
+    calc(100% - 13px) calc(50% + 1px);
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2.25rem !important;
+}
+
+/*
+ * Textareas: never let one be dragged wider than its column on a phone, and
+ * keep the resize handle off touch screens where it only gets in the way.
+ */
+textarea {
+  resize: vertical;
+}
+
+@media (max-width: 1023.98px) {
+  textarea {
+    resize: none;
+  }
 }
 
 body {
@@ -343,6 +537,39 @@ button,
   [role="button"] {
     transition: transform 0.12s ease;
   }
+
+  /*
+   * Fixed chrome is exempt.
+   *
+   * Scaling a child of a `position: fixed` bar makes the whole bar appear to
+   * twitch, and on the bottom tab bar it dragged the active pill out of
+   * alignment on every tap. Links inside running text keep the feedback.
+   */
+  header a:active,
+  header button:active,
+  nav[aria-label="Primary"] a:active,
+  nav[aria-label="Primary"] button:active,
+  .no-press-scale:active,
+  .no-press-scale *:active {
+    transform: none;
+  }
+}
+
+/* ===========================================================================
+   TOUCH TARGETS
+   ===========================================================================
+   Standalone controls -- icon buttons, tab bar entries, pagination dots --
+   reach the 44px minimum on touch screens. Scoped to `[data-touch-target]` and
+   real buttons rather than every `a`, so inline links inside paragraphs are
+   left alone and body copy keeps its rhythm.
+   =========================================================================== */
+@media (max-width: 1023.98px) {
+  button[data-touch-target],
+  a[data-touch-target],
+  [role="button"][data-touch-target] {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Bottom tab bar clearance so content never hides behind it.
@@ -351,7 +578,89 @@ button,
    this stylesheet is appended after the Tailwind import. */
 @media (max-width: 1023.98px) {
   .has-tabbar {
-    padding-bottom: calc(4.25rem + var(--safe-bottom));
+    padding-bottom: var(--tabbar-offset);
+  }
+}
+
+/* ===========================================================================
+   SHARED LAYOUT HELPERS
+   =========================================================================== */
+
+/*
+ * The top offset for the fixed header, and the matching negative pull every
+ * full-bleed hero uses to sit underneath it. Previously both were hard-coded
+ * `4.25rem` in a dozen components, which is why the notch broke them.
+ */
+.pt-header {
+  padding-top: var(--header-offset);
+}
+
+.-mt-header {
+  margin-top: calc(var(--header-offset) * -1);
+}
+
+/*
+ * Landscape gutters on notched phones, so content clears the rounded corners
+ * rather than disappearing into them.
+ */
+@media (max-width: 1023.98px) and (orientation: landscape) {
+  .px-safe {
+    padding-left: max(1.25rem, var(--safe-left));
+    padding-right: max(1.25rem, var(--safe-right));
+  }
+}
+
+/* ===========================================================================
+   PAGE HERO SCRIM
+   ===========================================================================
+
+   The inner-page banners (PageHero.tsx) used one 90deg gradient at every
+   width, already down to 0.42 alpha by the 50% mark. That is right on a
+   desktop, where the text sits in the left third -- but on a phone the
+   heading and description span the full width, so their right-hand end landed
+   on bare photo. White type on a sunlit banner is unreadable, and it is the
+   single most visible part of "not good in mobile view".
+
+   Below `sm` the scrim is vertical and much heavier, giving the text a dark
+   bed the whole way across. From `sm` up the original horizontal reveal
+   returns unchanged.
+   =========================================================================== */
+.page-hero-scrim {
+  background-image: linear-gradient(
+    180deg,
+    rgba(11, 45, 91, 0.92) 0%,
+    rgba(11, 45, 91, 0.8) 45%,
+    rgba(11, 45, 91, 0.88) 100%
+  );
+}
+
+@media (min-width: 640px) {
+  .page-hero-scrim {
+    background-image: linear-gradient(
+      90deg,
+      rgba(11, 45, 91, 0.94) 0%,
+      rgba(11, 45, 91, 0.84) 20%,
+      rgba(11, 45, 91, 0.65) 30%,
+      rgba(11, 45, 91, 0.42) 50%
+    );
+  }
+}
+
+/*
+ * A horizontal carousel that should show the next card peeking in the page
+ * gutter. Applied with the Container's own padding cancelled out, so the peek
+ * lands inside the 20px gutter instead of being cropped at the screen edge.
+ */
+.carousel-bleed {
+  margin-inline: -1.25rem;
+  padding-inline: 1.25rem;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .carousel-bleed {
+    margin-inline: -2rem;
+    padding-inline: 2rem;
   }
 }
 

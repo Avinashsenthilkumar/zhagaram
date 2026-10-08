@@ -20,41 +20,57 @@ export function PageHero({
 }) {
   return (
     <section
-      className="relative -mt-[4.25rem] overflow-hidden border-b border-primary/10 bg-primary-dark text-primary-foreground"
-      style={
-        image
-          ? {
-              backgroundImage: `
-                linear-gradient(
-                  90deg,
-                  rgba(11, 45, 91, 0.94) 0%,
-                  rgba(11, 45, 91, 0.84) 20%,
-                  rgba(11, 45, 91, 0.65) 30%,
-                  rgba(11, 45, 91, 0.42) 50%
-                ),
-                url("${image}")
-              `,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-          : undefined
-      }
+      className="-mt-header relative overflow-hidden border-b border-primary/10 bg-primary-dark text-primary-foreground"
     >
-      <Container className="relative z-10 pt-28 pb-14 sm:pt-32 sm:pb-20 lg:pt-36">
+      {/*
+        The banner and its scrim moved out of an inline `backgroundImage` and
+        into real layers, because the scrim has to change direction by
+        viewport.
+
+        The old single gradient ran at 90deg and was already down to 0.42 alpha
+        by the 50% mark. On a desktop that is correct -- the text occupies the
+        left third. On a phone the text spans the full width, so the right-hand
+        half of every heading sat on bare photo: white type on a bright banner,
+        which is exactly the "not good in mobile view" complaint. Below `sm`
+        the scrim is now vertical and much heavier, so the text has a dark bed
+        under it the whole way across.
+      */}
+      {image ? (
+        <>
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url("${image}")` }}
+          />
+          {/* `page-hero-scrim` is defined in styles.css: vertical and heavy
+              below `sm`, the original 90deg reveal from `sm` up. Kept out of a
+              Tailwind arbitrary value because a gradient that long is both
+              unreadable inline and easy to break on the next edit. */}
+          <div aria-hidden className="page-hero-scrim absolute inset-0" />
+        </>
+      ) : null}
+
+      <Container className="px-safe relative z-10 pb-12 pt-[calc(var(--header-offset)_+_2.5rem)] sm:pb-20 sm:pt-[calc(var(--header-offset)_+_4rem)]">
         <Breadcrumb items={crumbs} tone="dark" />
 
         {kicker ? (
-          <p className="mt-8 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-accent sm:text-xs">
+          <p className="mt-8 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-accent sm:text-xs sm:tracking-[0.22em]">
             {kicker}
           </p>
         ) : null}
 
-        <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl lg:text-5xl">
+        {/*
+          clamp() instead of a `text-3xl` → `sm:text-4xl` → `lg:text-5xl` step
+          ladder. Page titles here include "Terms & Conditions" and "Supplier
+          Enquiry"; at a fixed 30px on a 320px screen those broke awkwardly.
+          The heading now scales with the viewport and never overflows.
+        */}
+        <h1 className="mt-4 max-w-3xl text-[clamp(1.75rem,7vw,3rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white">
           {title}
         </h1>
 
         {description ? (
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg">
+          <p className="mt-4 max-w-2xl text-[0.9375rem] leading-relaxed text-white/90 sm:mt-5 sm:text-lg">
             {description}
           </p>
         ) : null}

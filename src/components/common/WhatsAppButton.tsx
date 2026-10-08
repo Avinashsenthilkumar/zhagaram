@@ -26,15 +26,22 @@ export function WhatsAppButton() {
       rel="noopener noreferrer"
       aria-label={`Chat with ${settings.companyName} on WhatsApp`}
       title="Chat with us on WhatsApp"
-      // bottom-40 / right-10: the same right-hand column as ScrollToTop
-      // (right-10 bottom-25), stacked above it, and clear of the mobile tab bar
-      // which is 4.25rem tall. The original bottom-6 right-6 put this button
-      // underneath both.
+      data-touch-target
+      /*
+       * Positioned off the tab bar, not off a guessed pixel value.
+       *
+       * `bottom-40` (10rem) was measured by eye against a phone without a home
+       * indicator: on an iPhone with one it floated oddly high, and `right-10`
+       * (2.5rem) left it marooned in from the edge. It now sits one gap above
+       * --tabbar-offset, which already includes env(safe-area-inset-bottom),
+       * and `z-[80]` keeps it under the tab bar (z-[90]) rather than fighting
+       * it for the same layer.
+       */
       className="
         fixed
-        bottom-40
-        right-10
-        z-[90]
+        bottom-[calc(var(--tabbar-offset)_+_1rem)]
+        right-4
+        z-[80]
         flex
         size-14
         items-center
@@ -51,8 +58,9 @@ export function WhatsAppButton() {
         focus:outline-none
         focus:ring-4
         focus:ring-[#25D366]/30
-        sm:bottom-8
-        sm:right-8
+        sm:right-6
+        lg:bottom-8
+        lg:right-8
       "
     >
       <img

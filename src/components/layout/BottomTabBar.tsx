@@ -38,7 +38,7 @@ export function BottomTabBar() {
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-2">
+      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1 sm:px-2">
         {tabs.map((tab) => {
           const active =
             tab.href === "/"
@@ -53,8 +53,16 @@ export function BottomTabBar() {
                 preload="intent"
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-[4.25rem] flex-col items-center justify-center gap-1 rounded-xl px-1",
-                  "text-[0.625rem] font-semibold tracking-wide transition-colors duration-200",
+                  "flex h-[var(--tabbar-h)] flex-col items-center justify-center gap-1 rounded-xl px-0.5",
+                  /*
+                    0.625rem used to compute to 9.4px against the old 15px
+                    root -- below the ~11px floor where a label stops being
+                    readable at arm's length. At a 16px root it is 10px, and
+                    bumping it to 0.6875rem lands on 11px. `truncate` keeps
+                    "Products" and "Process" on one line on a 320px screen
+                    instead of wrapping and shoving the icons out of line.
+                  */
+                  "w-full text-[0.6875rem] font-semibold leading-none tracking-tight transition-colors duration-200",
                   active ? "text-[#0B2D5B]" : "text-[#6B7280]",
                 )}
               >
@@ -69,7 +77,14 @@ export function BottomTabBar() {
                 >
                   <Icon className={tab.primary ? "size-5" : "size-[1.15rem]"} />
                 </span>
-                <span className={tab.primary ? "mt-0.5" : undefined}>{tab.label}</span>
+                <span
+                  className={cn(
+                    "block w-full truncate text-center",
+                    tab.primary && "mt-0.5",
+                  )}
+                >
+                  {tab.label}
+                </span>
               </Link>
             </li>
           );

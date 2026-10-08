@@ -75,23 +75,31 @@ function QuotePage() {
         }
       />
 
-      <section className="py-12 sm:py-16">
-        <Container>
+      <section className="py-10 sm:py-16">
+        <Container className="px-safe">
           <button
             type="button"
+            data-touch-target
             onClick={() => void navigate({ to: "/get-a-quote", search: {} })}
-            className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-[#0B2D5B] transition-colors hover:text-[#1E4A8A]"
+            className="-ml-2 mb-6 inline-flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-[#0B2D5B] transition-colors hover:text-[#1E4A8A] sm:mb-8"
           >
             <ArrowLeft className="size-4" />
             Choose a different enquiry type
           </button>
 
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+          {/*
+            The form comes FIRST on a phone (`order-first lg:order-none`).
+            Previously the "What to include" checklist sat above it, so on
+            opening /get-a-quote you had to scroll past a column of guidance
+            before the fields appeared -- the page looked like it had no form.
+            On desktop the two-column order is unchanged.
+          */}
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
+            <div className="lg:order-first">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent sm:tracking-[0.22em]">
                 What to include
               </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+              <h2 className="mt-3 text-[clamp(1.5rem,6vw,1.875rem)] font-semibold leading-tight tracking-tight">
                 A clear request helps us respond.
               </h2>
               <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
@@ -119,11 +127,13 @@ function QuotePage() {
               </p>
             </div>
 
-            <ContactForm
-              heading={isSupplier ? "Supplier enquiry" : "Quote request"}
-              variant={type}
-              submitLabel="Submit enquiry"
-            />
+            <div className="order-first lg:order-none">
+              <ContactForm
+                heading={isSupplier ? "Supplier enquiry" : "Quote request"}
+                variant={type}
+                submitLabel="Submit enquiry"
+              />
+            </div>
           </div>
         </Container>
       </section>
@@ -139,9 +149,9 @@ function QuoteChooser() {
         description="First, tell us which side you are on. We will show you the right form."
       />
 
-      <section className="py-14 sm:py-20">
-        <Container>
-          <div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2">
+      <section className="py-10 sm:py-20">
+        <Container className="px-safe">
+          <div className="mx-auto grid max-w-4xl gap-5 sm:grid-cols-2 sm:gap-6">
             {options.map((option) => {
               const Icon = option.icon;
               const isSupplier = option.type === "supplier";
@@ -153,9 +163,12 @@ function QuoteChooser() {
                   search={{ type: option.type }}
                   preload="intent"
                   className={cn(
-                    "group flex flex-col rounded-2xl border bg-card p-7 text-left",
+                    "group flex flex-col rounded-2xl border bg-card p-5 text-left sm:p-7",
                     "shadow-[var(--shadow-border)] transition-all duration-200",
-                    "hover:-translate-y-1 hover:shadow-[var(--shadow-border-hover)]",
+                    // `hover:-translate-y-1` on a touch device sticks after a
+                    // tap, leaving the card visibly lifted. Scoped to devices
+                    // that actually hover.
+                    "[@media(hover:hover)]:hover:-translate-y-1 [@media(hover:hover)]:hover:shadow-[var(--shadow-border-hover)]",
                     isSupplier ? "border-[#D4AF37]/30" : "border-[#0B2D5B]/15",
                   )}
                 >
@@ -170,10 +183,10 @@ function QuoteChooser() {
                     <Icon className="size-7" />
                   </span>
 
-                  <p className="mt-6 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  <p className="mt-5 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:mt-6 sm:tracking-[0.2em]">
                     {option.subtitle}
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                  <h2 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
                     {option.title}
                   </h2>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -196,7 +209,7 @@ function QuoteChooser() {
 
                   <span
                     className={cn(
-                      "mt-7 inline-flex w-full items-center justify-center rounded-xl px-5 py-3.5",
+                      "mt-6 inline-flex h-12 w-full items-center justify-center rounded-xl px-5 sm:mt-7",
                       "text-sm font-semibold transition-colors duration-200",
                       isSupplier
                         ? "bg-[#D4AF37] text-[#1a1405] group-hover:bg-[#c5a132]"
